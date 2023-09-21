@@ -17,6 +17,6 @@ add_executable(value-test value-test.cpp)
 add_test(NAME value-test
          COMMAND value-test)
 
-
-
-
+add_executable(graph-test graph-test.cpp)
+add_test(NAME graph-test
+         COMMAND graph-test)
