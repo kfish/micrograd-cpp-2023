@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <set>
 
 namespace ai {
 
@@ -9,6 +10,10 @@ class Value {
     public:
         Value(const T& data)
             : data_(data)
+        {}
+
+        Value(const T& data, std::set<Value<T>>& children, char op=' ')
+            : data_(data), prev_(children), op_(op)
         {}
 
         const T& data() const {
@@ -32,6 +37,8 @@ class Value {
         }
     private:
         T data_;
+        std::set<Value<T>> prev_{};
+        char op_{' '};
 };
 
 template <typename T>
