@@ -12,7 +12,7 @@ class Value {
             : data_(data)
         {}
 
-        Value(const T& data, std::set<Value<T>>& children, char op=' ')
+        Value(const T& data, std::set<const Value<T>*>& children, char op=' ')
             : data_(data), prev_(children), op_(op)
         {}
 
@@ -20,24 +20,32 @@ class Value {
             return data_;
         }
 
+        const std::set<const Value<T>*> children() const {
+            return prev_;
+        }
+
         Value<T> operator+(const Value<T>& other) const {
-            return Value(data_ + other.data());
+            std::set<const Value<T>*> children = {this, &other};
+            return Value(data_ + other.data(), children, '+');
         }
 
         Value<T> operator-(const Value<T>& other) const {
-            return Value(data_ - other.data());
+            std::set<const Value<T>*> children = {this, &other};
+            return Value(data_ - other.data(), children, '-');
         }
 
         Value<T> operator*(const Value<T>& other) const {
-            return Value(data_ * other.data());
+            std::set<const Value<T>*> children = {this, &other};
+            return Value(data_ * other.data(), children, '*');
         }
 
         Value<T> operator/(const Value<T>& other) const {
-            return Value(data_ / other.data());
+            std::set<const Value<T>*> children = {this, &other};
+            return Value(data_ / other.data(), children, '/');
         }
     private:
         T data_;
-        std::set<Value<T>> prev_{};
+        std::set<const Value<T>*> prev_{};
         char op_{' '};
 };
 
