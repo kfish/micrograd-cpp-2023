@@ -42,6 +42,10 @@ class RawValue {
             return data_;
         }
 
+        double grad() const {
+            return grad_;
+        }
+
         const std::string& label() const {
             return label_;
         }
@@ -75,6 +79,7 @@ class RawValue {
         }
     private:
         T data_;
+        double grad_{0.0};
         std::string label_{};
         std::set<ptr> prev_{};
         char op_{'\0'};
