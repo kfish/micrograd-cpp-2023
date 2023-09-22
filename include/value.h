@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cmath>
 #include <iostream>
+#include <functional>
 #include <memory>
 #include <set>
 
@@ -30,6 +32,7 @@ class RawValue {
         static ptr add_label(ptr unlabelled, const std::string& label)
         {
             unlabelled->label_ = label;
+            std::cerr << "Labelled " << unlabelled << std::endl;
             return unlabelled;
         }
 
@@ -58,24 +61,117 @@ class RawValue {
             return op_;
         }
 
-        friend Value<T> operator+(const Value<T>& a, const Value<T>& b) {
-            std::set<ptr> children = {a, b};
-            return make(a->data() + b->data(), children, "+");
+        void zerograd() {
+            grad_ = 0.0;
+            for (auto c : prev_) {
+                c->zerograd();
+            }
         }
 
+        friend void backward(const Value<T>& node) {
+            std::vector<RawValue<T>*> topo;
+            std::set<RawValue<T>*> visited;
+
+            std::function<void(const Value<T>&)> build_topo = [&](const Value<T>& v) {
+                if (!visited.contains(v.get())) {
+                    visited.insert(v.get());
+                    for (auto && c : v->children()) {
+                        build_topo(c);
+                    }
+                    topo.push_back(v.get());
+                }
+            };
+
+            build_topo(node);
+
+            std::cerr << "Built topo: size=" << topo.size() << std::endl;
+
+            node->zerograd();
+            node->grad_ = 1.0;
+
+            for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
+                const RawValue<T>* v = *it;
+                std::cerr << "Backprop: " << *v << std::endl;
+                auto f = v->backward_;
+                if (f) f(v);
+            }
+        }
+
+        friend Value<T> operator+(Value<T>& a, Value<T>& b) {
+            std::set<ptr> children = {a, b};
+
+            auto out = make(a->data() + b->data(), children, "+");
+
+            std::cerr << "Made + node of:\n\t" << a << "\n  +\t" << b
+                << "\n  out=\t" << out << std::endl;
+
+            out->backward_ = [&](const RawValue<T>* v) {
+                a->grad_ += v->grad_;
+                b->grad_ += v->grad_;
+                std::cerr << "  +.grad: v=" << *v
+                    << "\n  upd a=\t" << a
+                    << "\n  upd b=\t" << b
+                    << std::endl;
+            };
+
+            return out;
+        }
+
+#if 0
         friend Value<T> operator-(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
-            return make(a->data() - b->data(), children, "-");
-        }
+            auto out = make(a->data() - b->data(), children, "-");
 
-        friend Value<T> operator*(const Value<T>& a, const Value<T>& b) {
+            out->backward_ = [&]() {
+                a->grad_ += 1.0 * out->grad();
+                b->grad_ += -1.0 * out->grad();
+            };
+
+            return out;
+        }
+#endif
+
+        friend Value<T> operator*(Value<T>& a, Value<T>& b) {
             std::set<ptr> children = {a, b};
-            return make(a->data() * b->data(), children, "*");
+            auto out = make(a->data() * b->data(), children, "*");
+
+            out->backward_ = [&](const RawValue<T>* v) {
+                a->grad_ += b->data() * v->grad();
+                b->grad_ += a->data() * v->grad();
+            };
+
+            return out;
         }
 
+#if 0
         friend Value<T> operator/(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
-            return make(a->data() / b->data(), children, "/");
+            auto out = make(a->data() / b->data(), children, "/");
+
+            out->backward_ = [&]() {
+                a->grad_ += b->data() * out->grad();
+                b->grad_ += a->data() * out->grad();
+            };
+
+            return out;
+        }
+#endif
+
+        friend Value<T> tanh(Value<T>& a) {
+            std::set<ptr> children = {a};
+            double x = a->data();
+            double e2x = exp(2.0*x);
+            double t = (e2x-1)/(e2x+1);
+            auto out = make(t, children, "tanh");
+
+            std::cerr << "Made tanh node " << out << std::endl;
+
+            out->backward_ = [&](const RawValue<T>* v) {
+                double t = v->data_;
+                a->grad_ += (1.0 - t*t) * v->grad_;
+            };
+
+            return out;
         }
 
     private:
@@ -84,6 +180,8 @@ class RawValue {
         std::string label_{};
         std::set<ptr> prev_{};
         std::string op_{""};
+
+        std::function<void(const RawValue<T>*)> backward_{};
 };
 
 template <typename T, typename... Args>
@@ -98,12 +196,17 @@ static Value<T> expr(std::shared_ptr<RawValue<T>> unlabelled, const std::string&
 
 template <typename T>
 static inline std::ostream& operator<<(std::ostream& os, const RawValue<T>& value) {
-    return os << "Value(data=" << value.data() << ")";
+    return os << "Value("
+        << "label=" << value.label() << ", "
+        << "data=" << value.data() << ", "
+        << "grad=" << value.grad() << ", "
+        << "op=" << value.op()
+        << ")";
 }
 
 template <typename T>
 static inline std::ostream& operator<<(std::ostream& os, const std::shared_ptr<RawValue<T>>& value) {
-    return os << "Value(data=" << value->data() << ")";
+    return os << value.get() << "=&" << *value;
 }
 
 }

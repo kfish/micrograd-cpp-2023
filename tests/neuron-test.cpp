@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     auto w2 = leaf(1.0, "w2");
 
     // Bias of the neuron
-    auto b = leaf(6.7, "b");
+    auto b = leaf(6.8813735870195432, "b");
 
     auto x1w1 = expr(x1*w1, "x1*w1");
     auto x2w2 = expr(x2*w2, "x2*w2");
@@ -23,5 +23,9 @@ int main(int argc, char *argv[])
     auto x1w1x2w2 = expr(x1w1 + x2w2, "x1w1+x2w2");
     auto n = expr(x1w1x2w2 + b, "n");
 
-    std::cout << Graph(n) << std::endl;
+    auto o = expr(tanh(n), "o");
+
+    backward(o);
+
+    std::cout << Graph(o) << std::endl;
 }
