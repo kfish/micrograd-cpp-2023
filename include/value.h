@@ -27,6 +27,12 @@ class RawValue {
         {}
 
     public:
+        static ptr add_label(ptr unlabelled, const std::string& label)
+        {
+            unlabelled->label_ = label;
+            return unlabelled;
+        }
+
         template <typename... Args>
         static ptr make(Args&&... args) {
             return ptr(new RawValue<T>(std::forward<Args>(args)...));
@@ -75,8 +81,13 @@ class RawValue {
 };
 
 template <typename T, typename... Args>
-static Value<T> make_value(const T& data, Args&&... args) {
+static Value<T> leaf(const T& data, Args&&... args) {
     return RawValue<T>::make(data, std::forward<Args>(args)...);
+}
+
+template <typename T>
+static Value<T> expr(std::shared_ptr<RawValue<T>> unlabelled, const std::string& label) {
+    return RawValue<T>::add_label(unlabelled, label);
 }
 
 template <typename T>
