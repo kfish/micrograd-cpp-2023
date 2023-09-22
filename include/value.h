@@ -22,7 +22,7 @@ class RawValue {
             : data_(data), label_(label)
         {}
 
-        RawValue(const T& data, std::set<ptr>& children, char op='\0')
+        RawValue(const T& data, std::set<ptr>& children, const std::string& op="")
             : data_(data), prev_(children), op_(op)
         {}
 
@@ -54,35 +54,36 @@ class RawValue {
             return prev_;
         }
 
-        char op() const {
+        const std::string& op() const {
             return op_;
         }
 
         friend Value<T> operator+(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
-            return make(a->data() + b->data(), children, '+');
+            return make(a->data() + b->data(), children, "+");
         }
 
         friend Value<T> operator-(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
-            return make(a->data() - b->data(), children, '-');
+            return make(a->data() - b->data(), children, "-");
         }
 
         friend Value<T> operator*(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
-            return make(a->data() * b->data(), children, '*');
+            return make(a->data() * b->data(), children, "*");
         }
 
         friend Value<T> operator/(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
-            return make(a->data() / b->data(), children, '/');
+            return make(a->data() / b->data(), children, "/");
         }
+
     private:
         T data_;
         double grad_{0.0};
         std::string label_{};
         std::set<ptr> prev_{};
-        char op_{'\0'};
+        std::string op_{""};
 };
 
 template <typename T, typename... Args>

@@ -107,7 +107,7 @@ class Graph {
                    << " }\", shape=\"record\"]"
                    << std::endl;
 
-                if (node->op()) {
+                if (!node->op().empty()) {
                     // If this value is the result of an operation, create
                     // an op node for it
                     os << "  " << NodeOp<T>(node)
