@@ -11,22 +11,22 @@ class Trace {
     public:
         Trace(const Value<T>& root)
         {
-            build(&root);
+            build(root);
         }
 
-        const std::set<const Value<T>*>& nodes() const {
+        const std::set<Value<T>>& nodes() const {
             return nodes_;
         }
 
-        const std::set<std::pair<const Value<T>*, const Value<T>*>> edges() const {
+        const std::set<std::pair<Value<T>, Value<T>>> edges() const {
             return edges_;
         }
 
     private:
-        void build(const Value<T>* v) {
+        void build(const Value<T>& v) {
             if (!nodes_.contains(v)) {
                 nodes_.insert(v);
-                for (const Value<T>* c : v->children()) {
+                for (auto && c : v->children()) {
                     edges_.insert({c, v});
                     build(c);
                 }
@@ -34,55 +34,57 @@ class Trace {
         }
 
     private:
-        std::set<const Value<T>*> nodes_{};
-        std::set<std::pair<const Value<T>*, const Value<T>*>> edges_{};
+        std::set<Value<T>> nodes_{};
+        std::set<std::pair<Value<T>, Value<T>>> edges_{};
 };
 
 template <typename T>
 class NodeName {
     public:
-        NodeName(const Value<T>* value)
+        NodeName(const Value<T>& value)
             : value_(value)
         {}
 
-    private:
-        template <typename U>
-        friend std::ostream& operator<<(std::ostream& os, const NodeName<U>&);
+        const Value<T>& value() const {
+            return value_;
+        }
 
-        const Value<T>* value_;
+    private:
+        const Value<T>& value_;
 };
 
 template <typename T>
 static inline std::ostream& operator<<(std::ostream& os, const NodeName<T>& node) {
-    return os << "\"node" << node.value_ << "\"";
+    return os << "\"node" << node.value().get() << "\"";
 }
 
 template <typename T>
 class NodeOp {
     public:
-        NodeOp(const Value<T>* value)
+        NodeOp(const Value<T>& value)
             : value_(value)
         {}
 
-    private:
-        template <typename U>
-        friend std::ostream& operator<<(std::ostream& os, const NodeOp<U>&);
+        const Value<T>& value() const {
+            return value_;
+        }
 
-        const Value<T>* value_;
+    private:
+        const Value<T>& value_;
 };
 
 template <typename T>
 static inline std::ostream& operator<<(std::ostream& os, const NodeOp<T>& node) {
-    return os << "\"node" << node.value_ << node.value_->op() << "\"";
+    return os << "\"node" << node.value().get() << node.value()->op() << "\"";
 }
 
 template <typename T>
 class Graph {
     public:
-        Graph(const Value<T>& root)
+        //Graph(const Value<T>& root)
+        Graph(const std::shared_ptr<RawValue<T>>& root)
             : trace_(root)
         {
-            Trace<T> trace(root);
         }
 
         std::ostream& dump(std::ostream& os) const {
@@ -90,23 +92,23 @@ class Graph {
                << "  rankdir = \"LR\";"
                << std::endl;
 
-            for (const Value<T>* node : trace_.nodes()) {
+            for (const Value<T>& node : trace_.nodes()) {
                 // For any value in the graph, create a rectangular ("record") node
                 // for it
-                os << "  " << NodeName(node)
+                os << "  " << NodeName<T>(node)
                    << " [label = \"{ data=" << node->data() << " }\", shape=\"record\"]"
                    << std::endl;
 
                 if (node->op()) {
                     // If this value is the result of an operation, create
                     // an op node for it
-                    os << "  " << NodeOp(node)
+                    os << "  " << NodeOp<T>(node)
                        << " [label = \"" << node->op() << "\"]"
                        << std::endl;
 
                     // And connect the op to it
-                    os << "  " << NodeOp(node)
-                       << " -> " << NodeName(node) << ";"
+                    os << "  " << NodeOp<T>(node)
+                       << " -> " << NodeName<T>(node) << ";"
                        << std::endl;
                 }
             }
@@ -114,7 +116,7 @@ class Graph {
             // Edges
             for (auto && [n1, n2] : trace_.edges()) {
                 // Connect n1 to the op node of n2
-                os << "  " << NodeName(n1) << " -> " << NodeOp(n2) << ";" << std::endl;
+                os << "  " << NodeName<T>(n1) << " -> " << NodeOp<T>(n2) << ";" << std::endl;
             }
 
             os << "}" << std::endl;
