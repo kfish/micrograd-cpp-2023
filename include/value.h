@@ -12,7 +12,7 @@ class Value {
             : data_(data)
         {}
 
-        Value(const T& data, std::set<const Value<T>*>& children, char op=' ')
+        Value(const T& data, std::set<const Value<T>*>& children, char op='\0')
             : data_(data), prev_(children), op_(op)
         {}
 
@@ -22,6 +22,10 @@ class Value {
 
         const std::set<const Value<T>*> children() const {
             return prev_;
+        }
+
+        char op() const {
+            return op_;
         }
 
         Value<T> operator+(const Value<T>& other) const {
@@ -46,7 +50,7 @@ class Value {
     private:
         T data_;
         std::set<const Value<T>*> prev_{};
-        char op_{' '};
+        char op_{'\0'};
 };
 
 template <typename T>
