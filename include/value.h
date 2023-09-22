@@ -18,15 +18,13 @@ class RawValue {
         using ptr = std::shared_ptr<RawValue<T>>;
 
     private:
-        RawValue(const T& data)
-            : data_(data)
+        RawValue(const T& data, const std::string& label)
+            : data_(data), label_(label)
         {}
 
-#if 1
         RawValue(const T& data, std::set<ptr>& children, char op='\0')
             : data_(data), prev_(children), op_(op)
         {}
-#endif
 
     public:
         template <typename... Args>
@@ -36,6 +34,10 @@ class RawValue {
 
         const T& data() const {
             return data_;
+        }
+
+        const std::string& label() const {
+            return label_;
         }
 
         const std::set<ptr> children() const {
@@ -67,6 +69,7 @@ class RawValue {
         }
     private:
         T data_;
+        std::string label_{};
         std::set<ptr> prev_{};
         char op_{'\0'};
 };

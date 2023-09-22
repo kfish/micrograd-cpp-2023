@@ -96,7 +96,7 @@ class Graph {
                 // For any value in the graph, create a rectangular ("record") node
                 // for it
                 os << "  " << NodeName<T>(node)
-                   << " [label = \"{ data=" << node->data() << " }\", shape=\"record\"]"
+                   << " [label = \"{ " << node->label() << " | data=" << node->data() << " }\", shape=\"record\"]"
                    << std::endl;
 
                 if (node->op()) {
