@@ -14,68 +14,68 @@ class Trace {
             build(root);
         }
 
-        const std::set<Value<T>>& nodes() const {
+        const std::set<RawValue<T>*>& nodes() const {
             return nodes_;
         }
 
-        const std::set<std::pair<Value<T>, Value<T>>> edges() const {
+        const std::set<std::pair<RawValue<T>*, RawValue<T>*>> edges() const {
             return edges_;
         }
 
     private:
         void build(const Value<T>& v) {
-            if (!nodes_.contains(v)) {
-                nodes_.insert(v);
+            if (!nodes_.contains(v.get())) {
+                nodes_.insert(v.get());
                 for (auto && c : v->children()) {
-                    edges_.insert({c, v});
+                    edges_.insert({c.get(), v.get()});
                     build(c);
                 }
             }
         }
 
     private:
-        std::set<Value<T>> nodes_{};
-        std::set<std::pair<Value<T>, Value<T>>> edges_{};
+        std::set<RawValue<T>*> nodes_{};
+        std::set<std::pair<RawValue<T>*, RawValue<T>*>> edges_{};
 };
 
 template <typename T>
 class NodeName {
     public:
-        NodeName(const Value<T>& value)
-            : value_(value)
+        NodeName(const RawValue<T>* ptr)
+            : ptr_(ptr)
         {}
 
-        const Value<T>& value() const {
-            return value_;
+        const RawValue<T>* get() const {
+            return ptr_;
         }
 
     private:
-        const Value<T>& value_;
+        const RawValue<T>* ptr_;
 };
 
 template <typename T>
 static inline std::ostream& operator<<(std::ostream& os, const NodeName<T>& node) {
-    return os << "\"node" << node.value().get() << "\"";
+    return os << "\"node" << node.get() << "\"";
 }
 
 template <typename T>
 class NodeOp {
     public:
-        NodeOp(const Value<T>& value)
-            : value_(value)
+        NodeOp(const RawValue<T>* ptr)
+            : ptr_(ptr)
         {}
 
-        const Value<T>& value() const {
-            return value_;
+        const RawValue<T>* get() const {
+            return ptr_;
         }
 
     private:
-        const Value<T>& value_;
+        const RawValue<T>* ptr_;
 };
 
 template <typename T>
 static inline std::ostream& operator<<(std::ostream& os, const NodeOp<T>& node) {
-    return os << "\"node" << node.value().get() << node.value()->op() << "\"";
+    return os << "\"node" << node.get() << node.get()->op() << "\"";
 }
 
 template <typename T>
@@ -92,7 +92,7 @@ class Graph {
                << "  rankdir = \"LR\";"
                << std::endl;
 
-            for (const Value<T>& node : trace_.nodes()) {
+            for (const RawValue<T>* node : trace_.nodes()) {
                 // For any value in the graph, create a rectangular ("record") node
                 // for it
                 os << "  " << NodeName<T>(node)
