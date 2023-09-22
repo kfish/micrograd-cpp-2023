@@ -13,5 +13,8 @@ int main(int argc, char *argv[])
     auto e = expr(a*b, "e");
     auto d = expr(e+c, "d");
 
-    std::cout << Graph(d) << std::endl;
+    auto f = leaf(-2.0, "f");
+    auto L = expr(d * f, "L");
+
+    std::cout << Graph(L) << std::endl;
 }
