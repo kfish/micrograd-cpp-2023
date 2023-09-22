@@ -20,3 +20,7 @@ add_test(NAME value-test
 add_executable(graph-test graph-test.cpp)
 add_test(NAME graph-test
          COMMAND graph-test)
+
+add_executable(neuron-test neuron-test.cpp)
+add_test(NAME neuron-test
+         COMMAND neuron-test)
