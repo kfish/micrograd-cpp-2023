@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iomanip>
 #include <utility>
 
 #include "value.h"
@@ -88,15 +89,22 @@ class Graph {
         }
 
         std::ostream& dump(std::ostream& os) const {
+            auto old_precision = os.precision();
+
             os << "digraph G {\n"
                << "  rankdir = \"LR\";"
                << std::endl;
+
+            os << std::fixed << std::setprecision(4);
 
             for (const RawValue<T>* node : trace_.nodes()) {
                 // For any value in the graph, create a rectangular ("record") node
                 // for it
                 os << "  " << NodeName<T>(node)
-                   << " [label = \"{ " << node->label() << " | data=" << node->data() << " }\", shape=\"record\"]"
+                   << " [label = \"{ " << node->label()
+                   << " | data=" << node->data()
+                   << " | grad=" << node->grad()
+                   << " }\", shape=\"record\"]"
                    << std::endl;
 
                 if (node->op()) {
@@ -120,6 +128,8 @@ class Graph {
             }
 
             os << "}" << std::endl;
+
+            os << std::setprecision(old_precision);
 
             return os;
         }
