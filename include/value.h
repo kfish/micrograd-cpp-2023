@@ -20,7 +20,7 @@ class RawValue {
         using ptr = std::shared_ptr<RawValue<T>>;
 
     private:
-        RawValue(const T& data, const std::string& label)
+        RawValue(const T& data, const std::string& label="")
             : data_(data), label_(label)
         {}
 
@@ -97,6 +97,7 @@ class RawValue {
             }
         }
 
+        // operator+
         friend Value<T> operator+(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
 
@@ -117,6 +118,13 @@ class RawValue {
             return out;
         }
 
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> operator+(const Value<T>& a, N n) { return a + make(n); }
+
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> operator+(N n, const Value<T>& a) { return make(n) + a; }
+
+        // unary operator-
         friend Value<T> operator-(const Value<T>& a) {
             std::set<ptr> children = {a};
             auto out = make(-a->data(), children, "neg");
@@ -128,6 +136,7 @@ class RawValue {
             return out;
         }
 
+        // operator-
         friend Value<T> operator-(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() - b->data(), children, "-");
@@ -144,6 +153,13 @@ class RawValue {
             return out;
         }
 
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> operator-(const Value<T>& a, N n) { return a - make(n); }
+
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> operator-(N n, const Value<T>& a) { return make(n) - a; }
+
+        // operator*
         friend Value<T> operator*(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() * b->data(), children, "*");
@@ -156,6 +172,13 @@ class RawValue {
             return out;
         }
 
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> operator*(const Value<T>& a, N n) { return a * make(n); }
+
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> operator*(N n, const Value<T>& a) { return make(n) * a; }
+
+        // operator/
         friend Value<T> operator/(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() / b->data(), children, "/");
@@ -169,6 +192,13 @@ class RawValue {
             return out;
         }
 
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> operator/(const Value<T>& a, N n) { return a / make(n); }
+
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> operator/(N n, const Value<T>& a) { return make(n) / a; }
+
+        // recip
         friend Value<T> recip(const Value<T>& a) {
             std::set<ptr> children = {a};
             double t = pow(a->data(), -1.0);
@@ -183,6 +213,7 @@ class RawValue {
             return out;
         }
 
+        // pow
         friend Value<T> pow(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             double t = pow(a->data(), b->data());
@@ -197,6 +228,13 @@ class RawValue {
             return out;
         }
 
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> pow(const Value<T>& a, N n) { return pow(a, make(n)); }
+
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend Value<T> pow(N n, const Value<T>& a) { return pow(make(n), a); }
+
+        // tanh
         friend Value<T> tanh(const Value<T>& a) {
             std::set<ptr> children = {a};
             double x = a->data();

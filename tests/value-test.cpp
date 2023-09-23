@@ -18,6 +18,12 @@ int main(int argc, char *argv[])
 
     std::cout << a+b << std::endl;
 
+    std::cout << a+7.0 << std::endl;
+
+    std::cout << 7.0+b << std::endl;
+
+    std::cout << a+7.0+b << std::endl;
+
     std::cout << a+b+c << std::endl;
 
     std::cout << (a*b) << std::endl;
