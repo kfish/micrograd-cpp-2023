@@ -213,6 +213,21 @@ class RawValue {
             return out;
         }
 
+        // exp
+        friend Value<T> exp(const Value<T>& a) {
+            std::set<ptr> children = {a};
+            double t = exp(a->data());
+            auto out = make(t, children, "exp");
+
+            std::cerr << "Made exp node " << out << std::endl;
+
+            out->backward_ = [&](const RawValue<T>* v) {
+                a->grad_ += v->data_ * v->grad_;
+            };
+
+            return out;
+        }
+
         // pow
         friend Value<T> pow(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
