@@ -93,7 +93,7 @@ class RawValue {
                 const RawValue<T>* v = *it;
                 std::cerr << "Backprop: " << *v << std::endl;
                 auto f = v->backward_;
-                if (f) f(v);
+                if (f) f();
             }
         }
 
@@ -106,10 +106,10 @@ class RawValue {
             std::cerr << "Made + node of:\n\t" << a << "\n  +\t" << b
                 << "\n  out=\t" << out << std::endl;
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ += v->grad_;
-                b->grad_ += v->grad_;
-                std::cerr << "  +.grad: v=" << *v
+            out->backward_ = [=]() {
+                a->grad_ += out->grad_;
+                b->grad_ += out->grad_;
+                std::cerr << "  +.grad: out=" << out
                     << "\n  upd a=\t" << a
                     << "\n  upd b=\t" << b
                     << std::endl;
@@ -129,8 +129,8 @@ class RawValue {
             std::set<ptr> children = {a};
             auto out = make(-a->data(), children, "neg");
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ -= v->grad_;
+            out->backward_ = [&]() {
+                a->grad_ -= out->grad_;
             };
 
             return out;
@@ -141,10 +141,10 @@ class RawValue {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() - b->data(), children, "-");
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ += v->grad_;
-                b->grad_ -= v->grad_;
-                std::cerr << "  -.grad: v=" << *v
+            out->backward_ = [&]() {
+                a->grad_ += out->grad_;
+                b->grad_ -= out->grad_;
+                std::cerr << "  -.grad: out=" << out
                     << "\n  upd a=\t" << a
                     << "\n  upd b=\t" << b
                     << std::endl;
@@ -164,9 +164,9 @@ class RawValue {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() * b->data(), children, "*");
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ += b->data() * v->grad();
-                b->grad_ += a->data() * v->grad();
+            out->backward_ = [=]() {
+                a->grad_ += b->data() * out->grad();
+                b->grad_ += a->data() * out->grad();
             };
 
             return out;
@@ -175,18 +175,17 @@ class RawValue {
         template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
         friend Value<T> operator*(const Value<T>& a, N n) { return a * make(n); }
 
-        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
-        friend Value<T> operator*(N n, const Value<T>& a) { return make(n) * a; }
+        //template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        //friend Value<T> operator*(N n, const Value<T>& a) { return make(n) * a; }
 
         // operator/
         friend Value<T> operator/(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() / b->data(), children, "/");
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ += (1.0/b->data()) * v->grad();
-                b->grad_ += a->data() * v->grad();
-                b->grad_ += a->data() * pow(b->data(), -2.0) * v->grad();
+            out->backward_ = [&]() {
+                a->grad_ += (1.0/b->data()) * out->grad();
+                b->grad_ += a->data() * pow(b->data(), -2.0) * out->grad();
             };
 
             return out;
@@ -206,8 +205,8 @@ class RawValue {
 
             std::cerr << "Made recip node " << out << std::endl;
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ += (-1.0 * pow(a->data(), -2.0)) * v->grad();
+            out->backward_ = [&]() {
+                a->grad_ += (-1.0 * pow(a->data(), -2.0)) * out->grad();
             };
 
             return out;
@@ -221,8 +220,8 @@ class RawValue {
 
             std::cerr << "Made exp node " << out << std::endl;
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ += v->data_ * v->grad_;
+            out->backward_ = [&]() {
+                a->grad_ += out->data_ * out->grad_;
             };
 
             return out;
@@ -236,8 +235,8 @@ class RawValue {
 
             std::cerr << "Made pow node " << out << std::endl;
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ += (b->data() * pow(a->data(), (b->data()-1))) * v->grad();
+            out->backward_ = [&]() {
+                a->grad_ += (b->data() * pow(a->data(), (b->data()-1))) * out->grad();
             };
 
             return out;
@@ -259,9 +258,9 @@ class RawValue {
 
             std::cerr << "Made tanh node " << out << std::endl;
 
-            out->backward_ = [&](const RawValue<T>* v) {
-                double t = v->data_;
-                a->grad_ += (1.0 - t*t) * v->grad_;
+            out->backward_ = [&]() {
+                double t = out->data_;
+                a->grad_ += (1.0 - t*t) * out->grad_;
             };
 
             return out;
@@ -274,7 +273,7 @@ class RawValue {
         std::set<ptr> prev_{};
         std::string op_{""};
 
-        std::function<void(const RawValue<T>*)> backward_{};
+        std::function<void()> backward_{};
 };
 
 template <typename T, typename... Args>
