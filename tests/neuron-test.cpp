@@ -23,7 +23,17 @@ int main(int argc, char *argv[])
     auto x1w1x2w2 = expr(x1w1 + x2w2, "x1w1+x2w2");
     auto n = expr(x1w1x2w2 + b, "n");
 
+#if 0
     auto o = expr(tanh(n), "o");
+#else
+    auto e = exp(2.0*n);
+    auto o = (e - 1.0) / (e + 1.0);
+
+    //auto two = leaf(2.0, "two");
+    //auto e = expr(two*n, "e");
+
+    //auto e = expr(2.0*n, "e");
+#endif
 
     backward(o);
 
