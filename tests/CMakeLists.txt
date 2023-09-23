@@ -24,3 +24,7 @@ add_test(NAME graph-test
 add_executable(neuron-test neuron-test.cpp)
 add_test(NAME neuron-test
          COMMAND neuron-test)
+
+add_executable(multivariate-test multivariate-test.cpp)
+add_test(NAME multivariate-test
+         COMMAND multivariate-test)

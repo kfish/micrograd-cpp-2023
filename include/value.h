@@ -117,19 +117,32 @@ class RawValue {
             return out;
         }
 
-#if 0
-        friend Value<T> operator-(const Value<T>& a, const Value<T>& b) {
-            std::set<ptr> children = {a, b};
-            auto out = make(a->data() - b->data(), children, "-");
+        friend Value<T> operator-(const Value<T>& a) {
+            std::set<ptr> children = {a};
+            auto out = make(-a->data(), children, "neg");
 
-            out->backward_ = [&]() {
-                a->grad_ += 1.0 * out->grad();
-                b->grad_ += -1.0 * out->grad();
+            out->backward_ = [&](const RawValue<T>* v) {
+                a->grad_ -= v->grad_;
             };
 
             return out;
         }
-#endif
+
+        friend Value<T> operator-(const Value<T>& a, const Value<T>& b) {
+            std::set<ptr> children = {a, b};
+            auto out = make(a->data() - b->data(), children, "-");
+
+            out->backward_ = [&](const RawValue<T>* v) {
+                a->grad_ += v->grad_;
+                b->grad_ -= v->grad_;
+                std::cerr << "  -.grad: v=" << *v
+                    << "\n  upd a=\t" << a
+                    << "\n  upd b=\t" << b
+                    << std::endl;
+            };
+
+            return out;
+        }
 
         friend Value<T> operator*(Value<T>& a, Value<T>& b) {
             std::set<ptr> children = {a, b};
@@ -143,19 +156,31 @@ class RawValue {
             return out;
         }
 
-#if 0
         friend Value<T> operator/(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() / b->data(), children, "/");
 
-            out->backward_ = [&]() {
-                a->grad_ += b->data() * out->grad();
-                b->grad_ += a->data() * out->grad();
+            out->backward_ = [&](const RawValue<T>* v) {
+                a->grad_ += b->data() * v->grad();
+                b->grad_ += a->data() * v->grad();
             };
 
             return out;
         }
-#endif
+
+        friend Value<T> pow(Value<T>& a, Value<T>& b) {
+            std::set<ptr> children = {a, b};
+            double t = pow(a->data(), b->data());
+            auto out = make(t, children, "pow");
+
+            std::cerr << "Made pow node " << out << std::endl;
+
+            out->backward_ = [&](const RawValue<T>* v) {
+                a->grad_ += (b->data() * pow(a->data(), (b->data()-1))) * v->grad();
+            };
+
+            return out;
+        }
 
         friend Value<T> tanh(Value<T>& a) {
             std::set<ptr> children = {a};
