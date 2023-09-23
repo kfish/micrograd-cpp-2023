@@ -97,7 +97,7 @@ class RawValue {
             }
         }
 
-        friend Value<T> operator+(Value<T>& a, Value<T>& b) {
+        friend Value<T> operator+(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
 
             auto out = make(a->data() + b->data(), children, "+");
@@ -144,7 +144,7 @@ class RawValue {
             return out;
         }
 
-        friend Value<T> operator*(Value<T>& a, Value<T>& b) {
+        friend Value<T> operator*(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() * b->data(), children, "*");
 
@@ -169,7 +169,7 @@ class RawValue {
             return out;
         }
 
-        friend Value<T> recip(Value<T>& a) {
+        friend Value<T> recip(const Value<T>& a) {
             std::set<ptr> children = {a};
             double t = pow(a->data(), -1.0);
             auto out = make(t, children, "recip");
@@ -183,7 +183,7 @@ class RawValue {
             return out;
         }
 
-        friend Value<T> pow(Value<T>& a, Value<T>& b) {
+        friend Value<T> pow(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             double t = pow(a->data(), b->data());
             auto out = make(t, children, "pow");
@@ -197,7 +197,7 @@ class RawValue {
             return out;
         }
 
-        friend Value<T> tanh(Value<T>& a) {
+        friend Value<T> tanh(const Value<T>& a) {
             std::set<ptr> children = {a};
             double x = a->data();
             double e2x = exp(2.0*x);
