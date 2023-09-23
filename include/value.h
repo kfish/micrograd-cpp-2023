@@ -161,8 +161,23 @@ class RawValue {
             auto out = make(a->data() / b->data(), children, "/");
 
             out->backward_ = [&](const RawValue<T>* v) {
-                a->grad_ += b->data() * v->grad();
+                a->grad_ += (1.0/b->data()) * v->grad();
                 b->grad_ += a->data() * v->grad();
+                b->grad_ += a->data() * pow(b->data(), -2.0) * v->grad();
+            };
+
+            return out;
+        }
+
+        friend Value<T> recip(Value<T>& a) {
+            std::set<ptr> children = {a};
+            double t = pow(a->data(), -1.0);
+            auto out = make(t, children, "recip");
+
+            std::cerr << "Made recip node " << out << std::endl;
+
+            out->backward_ = [&](const RawValue<T>* v) {
+                a->grad_ += (-1.0 * pow(a->data(), -2.0)) * v->grad();
             };
 
             return out;

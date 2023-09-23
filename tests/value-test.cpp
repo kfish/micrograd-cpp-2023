@@ -21,7 +21,28 @@ int main(int argc, char *argv[])
     std::cout << (a*b) << std::endl;
 
     std::cout << (a-b) << std::endl;
-    std::cout << (a/b) << std::endl;
+
+    auto minus1 = leaf(-1.0, "-1.0");
+    auto nb = expr(b * minus1, "nb");
+    std::cout << (a + nb) << std::endl;
+
+    auto g = expr(a/b, "a/b");;
+    std::cout << g << std::endl;
+
+    auto tg = expr(tanh(g), "tanh(g)");
+    std::cout << tg << std::endl;
+    backward(tg);
+
+    auto br = expr(recip(b), "br");;
+    std::cout << br << std::endl;
+
+    auto f = expr(a * br, "f");
+    std::cout << f << std::endl;
+
+    auto tt = expr(tanh(f), "tanh(f)");;
+    std::cout << tt << std::endl;
+
+    backward(tt);
 
     auto y = (a*b) + c;
     std::cout << y << std::endl;
