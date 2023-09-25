@@ -28,3 +28,11 @@ add_test(NAME value-neuron-test
 add_executable(multivariate-test multivariate-test.cpp)
 add_test(NAME multivariate-test
          COMMAND multivariate-test)
+
+add_executable(mac-test mac-test.cpp)
+add_test(NAME mac-test
+         COMMAND mac-test)
+
+add_executable(nn-test nn-test.cpp)
+add_test(NAME nn-test
+         COMMAND nn-test)
