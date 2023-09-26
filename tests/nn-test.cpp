@@ -17,5 +17,9 @@ int main(int argc, char *argv[])
 
     std::cerr << l << std::endl;
     std::cerr << PrettyArray(l(input)) << std::endl;
+
+    MLP<double, 3, 4, 2> mlp;
+    std::cerr << mlp << std::endl;
+    std::cerr << PrettyArray(mlp(input)) << std::endl;
 }
 

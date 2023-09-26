@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <tuple>
 
 #include "value.h"
 #include "funcy.h"
@@ -59,6 +60,92 @@ class Layer {
 template <typename T, size_t Nin, size_t Nout>
 static inline std::ostream& operator<<(std::ostream& os, const Layer<T, Nin, Nout>& l) {
     return os << "Layer(" << PrettyArray(l.neurons()) << ")";
+}
+
+template <typename T, size_t Nin, size_t... Nouts>
+struct BuildLayers;
+
+template <typename T, size_t Nin, size_t First, size_t... Rest>
+struct BuildLayers<T, Nin, First, Rest...> {
+    using type = decltype(std::tuple_cat(
+        std::tuple<Layer<T, Nin, First>>{},
+        typename BuildLayers<T, First, Rest...>::type{}
+    ));
+};
+
+template <typename T, size_t Nin, size_t Last>
+struct BuildLayers<T, Nin, Last> {
+    using type = std::tuple<Layer<T, Nin, Last>>;
+};
+
+template <typename T, size_t Nin, size_t... Nouts>
+using Layers = typename BuildLayers<T, Nin, Nouts...>::type;
+
+template <typename T, size_t Nin, size_t... Nouts>
+class MLP {
+public:
+    MLP() {
+        init<0, Nin, Nouts...>();
+    }
+
+    const Layers<T, Nin, Nouts...>& layers() const
+    {
+        return layers_;
+    };
+
+    auto operator()(const std::array<T, Nin>& input) {
+        return forward<0, Nin, Nouts...>(input);
+    }
+
+private:
+    template <size_t I, size_t NinCurr, size_t NoutCurr, size_t... NoutsRest>
+    void init() {
+        static_assert(I < sizeof...(Nouts), "Invalid index.");
+        std::get<I>(layers_) = Layer<T, NinCurr, NoutCurr>{};
+        if constexpr (sizeof...(NoutsRest) > 0) {
+            init<I + 1, NoutCurr, NoutsRest...>();
+        }
+    }
+
+    template <size_t I, size_t NinCurr, size_t NoutCurr, size_t... NoutsRest>
+    auto forward(const std::array<T, NinCurr>& input) -> decltype(auto) {
+        auto output = std::get<I>(layers_)(input);
+        if constexpr (sizeof...(NoutsRest) > 0) {
+            return forward<I + 1, NoutCurr, NoutsRest...>(output);
+        } else {
+            return output;
+        }
+    }
+
+private:
+    Layers<T, Nin, Nouts...> layers_;
+
+};
+
+// Recursive template function to print each layer in a tuple
+template<std::size_t I = 0, typename... Tp>
+inline typename std::enable_if<I == sizeof...(Tp), std::ostream&>::type
+print_tuple(std::ostream& os, const std::tuple<Tp...>& t)
+{
+    return os;
+}
+
+template<std::size_t I = 0, typename... Tp>
+inline typename std::enable_if<I < sizeof...(Tp), std::ostream&>::type
+print_tuple(std::ostream& os, const std::tuple<Tp...>& t)
+{
+    os << std::get<I>(t);
+    if (I + 1 != sizeof...(Tp)) os << ", ";
+    return print_tuple<I + 1, Tp...>(os, t);
+}
+
+// Overload for MLP
+template <typename T, size_t Nin, size_t... Nouts>
+static inline std::ostream& operator<<(std::ostream& os, const MLP<T, Nin, Nouts...>& mlp) {
+    os << "MLP(";
+    print_tuple(os, mlp.layers());
+    os << ")";
+    return os;
 }
 
 }
