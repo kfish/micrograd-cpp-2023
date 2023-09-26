@@ -45,7 +45,7 @@ template <typename T, size_t Nin, size_t Nout>
 class Layer {
     public:
         std::array<T, Nout> operator()(const std::array<T, Nin>& x) {
-            return map_array(neurons_, x);
+            return map_array<Neuron<T, Nin>, std::array<T, Nin>, T, Nout>(neurons_, x);
         }
 
         const std::array<Neuron<T, Nin>, Nout> neurons() const {
