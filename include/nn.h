@@ -3,6 +3,7 @@
 #include <cmath>
 #include <tuple>
 
+#include "array.h"
 #include "funcy.h"
 #include "quickmath.h"
 #include "randomdata.h"
