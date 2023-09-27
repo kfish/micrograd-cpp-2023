@@ -3,10 +3,10 @@
 #include <cmath>
 #include <tuple>
 
-#include "value.h"
 #include "funcy.h"
 #include "quickmath.h"
 #include "randomdata.h"
+#include "value.h"
 
 namespace ai {
 
@@ -18,23 +18,24 @@ class Neuron {
         {
         }
 
-        T operator()(const std::array<T, Nin>& x) const {
+        Value<T> operator()(const std::array<Value<T>, Nin>& x) const {
             // y = w*x + b
-            T y = mac(weights_, x) + bias_;
+            auto zero = leaf<double>(0.0);
+            Value<T> y = mac(weights_, x, zero) + bias_;
             return tanh(y);
         }
 
-        const std::array<T, Nin>& weights() const {
+        const std::array<Value<T>, Nin>& weights() const {
             return weights_;
         }
 
-        T bias() const {
+        Value<T> bias() const {
             return bias_;
         }
 
     private:
-        std::array<T, Nin> weights_{};
-        T bias_{};
+        std::array<Value<T>, Nin> weights_{};
+        Value<T> bias_{};
 };
 
 template <typename T, size_t Nin>
@@ -45,8 +46,8 @@ static inline std::ostream& operator<<(std::ostream& os, const Neuron<T, Nin>& n
 template <typename T, size_t Nin, size_t Nout>
 class Layer {
     public:
-        std::array<T, Nout> operator()(const std::array<T, Nin>& x) {
-            return map_array<Neuron<T, Nin>, std::array<T, Nin>, T, Nout>(neurons_, x);
+        std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& x) {
+            return map_array<Neuron<T, Nin>, std::array<Value<T>, Nin>, Value<T>, Nout>(neurons_, x);
         }
 
         const std::array<Neuron<T, Nin>, Nout> neurons() const {
@@ -93,7 +94,7 @@ public:
         return layers_;
     };
 
-    auto operator()(const std::array<T, Nin>& input) {
+    auto operator()(const std::array<Value<T>, Nin>& input) {
         return forward<0, Nin, Nouts...>(input);
     }
 
@@ -108,7 +109,7 @@ private:
     }
 
     template <size_t I, size_t NinCurr, size_t NoutCurr, size_t... NoutsRest>
-    auto forward(const std::array<T, NinCurr>& input) -> decltype(auto) {
+    auto forward(const std::array<Value<T>, NinCurr>& input) -> decltype(auto) {
         auto output = std::get<I>(layers_)(input);
         if constexpr (sizeof...(NoutsRest) > 0) {
             return forward<I + 1, NoutCurr, NoutsRest...>(output);

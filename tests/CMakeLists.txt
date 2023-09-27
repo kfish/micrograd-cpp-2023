@@ -36,3 +36,7 @@ add_test(NAME mac-test
 add_executable(nn-double-test nn-double-test.cpp)
 add_test(NAME nn-double-test
          COMMAND nn-double-test)
+
+add_executable(nn-test nn-test.cpp)
+add_test(NAME nn-test
+         COMMAND nn-test)

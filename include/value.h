@@ -109,6 +109,7 @@ class RawValue {
             out->backward_ = [=]() {
                 a->grad_ += out->grad_;
                 b->grad_ += out->grad_;
+
                 std::cerr << "  +.grad: out=" << out
                     << "\n  upd a=\t" << a
                     << "\n  upd b=\t" << b
