@@ -99,6 +99,10 @@ public:
         return forward<0, Nin, Nouts...>(input);
     }
 
+    auto operator()(const std::array<T, Nin>& input) {
+        return this->operator()(value_array(input));
+    }
+
 private:
     template <size_t I, size_t NinCurr, size_t NoutCurr, size_t... NoutsRest>
     void init() {

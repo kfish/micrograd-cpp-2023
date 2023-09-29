@@ -32,7 +32,7 @@ class RawValue {
         static ptr add_label(ptr unlabelled, const std::string& label)
         {
             unlabelled->label_ = label;
-            std::cerr << "Labelled " << unlabelled << std::endl;
+            //std::cerr << "Labelled " << unlabelled << std::endl;
             return unlabelled;
         }
 
@@ -84,14 +84,14 @@ class RawValue {
 
             build_topo(node);
 
-            std::cerr << "Built topo: size=" << topo.size() << std::endl;
+            //std::cerr << "Built topo: size=" << topo.size() << std::endl;
 
             node->zerograd();
             node->grad_ = 1.0;
 
             for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
                 const RawValue<T>* v = *it;
-                std::cerr << "Backprop: " << *v << std::endl;
+                //std::cerr << "Backprop: " << *v << std::endl;
                 auto f = v->backward_;
                 if (f) f();
             }
@@ -103,17 +103,21 @@ class RawValue {
 
             auto out = make(a->data() + b->data(), children, "+");
 
+#if 0
             std::cerr << "Made + node of:\n\t" << a << "\n  +\t" << b
                 << "\n  out=\t" << out << std::endl;
+#endif
 
             out->backward_ = [=]() {
                 a->grad_ += out->grad_;
                 b->grad_ += out->grad_;
 
+#if 0
                 std::cerr << "  +.grad: out=" << out
                     << "\n  upd a=\t" << a
                     << "\n  upd b=\t" << b
                     << std::endl;
+#endif
             };
 
             return out;
@@ -206,7 +210,7 @@ class RawValue {
             double t = pow(a->data(), -1.0);
             auto out = make(t, children, "recip");
 
-            std::cerr << "Made recip node " << out << std::endl;
+            //std::cerr << "Made recip node " << out << std::endl;
 
             out->backward_ = [=]() {
                 a->grad_ += (-1.0 * pow(a->data(), -2.0)) * out->grad();
@@ -221,7 +225,7 @@ class RawValue {
             double t = exp(a->data());
             auto out = make(t, children, "exp");
 
-            std::cerr << "Made exp node " << out << std::endl;
+            //std::cerr << "Made exp node " << out << std::endl;
 
             out->backward_ = [=]() {
                 a->grad_ += out->data_ * out->grad_;
@@ -236,7 +240,7 @@ class RawValue {
             double t = pow(a->data(), b->data());
             auto out = make(t, children, "pow");
 
-            std::cerr << "Made pow node " << out << std::endl;
+            //std::cerr << "Made pow node " << out << std::endl;
 
             out->backward_ = [=]() {
                 a->grad_ += (b->data() * pow(a->data(), (b->data()-1))) * out->grad();
@@ -259,7 +263,7 @@ class RawValue {
             double t = (e2x-1)/(e2x+1);
             auto out = make(t, children, "tanh");
 
-            std::cerr << "Made tanh node " << out << std::endl;
+            //std::cerr << "Made tanh node " << out << std::endl;
 
             out->backward_ = [=]() {
                 double t = out->data_;
@@ -287,6 +291,26 @@ static Value<T> leaf(const T& data, Args&&... args) {
 template <typename T>
 static Value<T> expr(std::shared_ptr<RawValue<T>> unlabelled, const std::string& label) {
     return RawValue<T>::add_label(unlabelled, label);
+}
+
+template <typename T, size_t N>
+constexpr std::array<Value<T>, N> value_array(const std::array<T, N>& init) {
+    std::array<Value<T>, N> result{};
+    for (size_t i = 0; i < N; ++i) {
+        result[i] = RawValue<T>::make(init[i]);
+    }
+    return result;
+}
+
+template <typename T, size_t M, size_t N>
+constexpr std::array<Value<T>, N> value_arrays(const std::array<std::array<T, M>, N>& init) {
+    std::array<std::array<Value<T>, M>, N> result{};
+    for (size_t i = 0; i < N; ++i) {
+        for (size_t j = 0; i < M; ++i) {
+            result[j][i] = RawValue<T>::make(init[j][i]);
+        }
+    }
+    return result;
 }
 
 template <typename T>
