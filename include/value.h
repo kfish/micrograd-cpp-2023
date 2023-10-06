@@ -49,6 +49,12 @@ class RawValue {
             return grad_;
         }
 
+        void adjust(const T& learning_rate) {
+            //std::cerr << "ADJUST: learning_rate=" << learning_rate << "\tgrad_=" << grad_ << "\tOLD data_=" << data_;
+            data_ -= -learning_rate * grad_;
+            //std::cerr << "\tNEW data_=" << data_ << std::endl;
+        }
+
         const std::string& label() const {
             return label_;
         }
@@ -91,7 +97,7 @@ class RawValue {
 
             for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
                 const RawValue<T>* v = *it;
-                //std::cerr << "Backprop: " << *v << std::endl;
+                //std::cerr << "Backprop: " << v << "=&" << *v << std::endl;
                 auto f = v->backward_;
                 if (f) f();
             }

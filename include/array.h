@@ -9,9 +9,9 @@ public:
     PrettyArray(const std::array<T, N>& arr) : std::array<T, N>(arr) {}
 
     friend std::ostream& operator<<(std::ostream& os, const PrettyArray& arr) {
-        os << "[ ";
+        os << "[\n";
         for (const auto& elem : arr) {
-            os << elem << ' ';
+            os << '\t' << elem << '\n';
         }
         os << ']';
         return os;

@@ -14,6 +14,16 @@ auto map_array(const std::array<F, N>& arr, const Tin& input) -> std::array<Tout
     return output;
 }
 
+template <typename F, typename Tin, typename Tout, size_t N>
+auto map_array_with_index(const std::array<F, N>& arr, const Tin& input) -> std::array<Tout, N> {
+    std::array<Tout, N> output{};
+    std::for_each(std::execution::par_unseq, std::begin(arr), std::end(arr),
+                  [&](const F& f, size_t i) {
+                      output[i] = f(input, i);
+                  });
+    return output;
+}
+
 template <typename Func, typename T, std::size_t N>
 auto array_transform(Func&& func, const std::array<T, N>& input) {
     std::array<decltype(func(std::declval<T>())), N> output;
