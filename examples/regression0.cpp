@@ -55,12 +55,7 @@ int main(int argc, char *argv[])
 
     auto backprop = BackProp<double, 4, double>(n, "loss.tsv");
 
-    auto loss_f = backprop.loss_function()(input, y);
-    backward(loss_f);
-
-    //std::cout << Graph(loss_f) << std::endl;
-
-    double loss = backprop(input, y, learning_rate, 100);
+    double loss = backprop(input, y, learning_rate, 40, true);
 
     std::cout << Graph(backprop.loss_function()(input, y)) << std::endl;
 }

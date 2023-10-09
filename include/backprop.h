@@ -35,7 +35,7 @@ class BackPropImpl {
             T result;
 
             for (int i=0; i < iterations; ++i) {
-                Value<T> loss = loss_f(input, ground_truth);
+                Value<T> loss = loss_f(input, ground_truth, verbose);
 
                 result = loss->data();
                 loss_output_ << iter_ << '\t' << result << '\n';
