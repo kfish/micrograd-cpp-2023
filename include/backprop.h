@@ -29,22 +29,22 @@ class BackPropImpl {
         }
 
         T operator()(std::array<Arg, N>& input, const std::array<T, N>& ground_truth,
-                T learning_rate, int iterations)
+                T learning_rate, int iterations, bool verbose=false)
         {
             auto loss_f = loss_function();
             T result;
 
             for (int i=0; i < iterations; ++i) {
-                Value<double> loss = loss_f(input, ground_truth);
+                Value<T> loss = loss_f(input, ground_truth);
 
                 result = loss->data();
-                std::cerr << "Loss (" << iter_ << "):\t" << result << std::endl;
                 loss_output_ << iter_ << '\t' << result << '\n';
 
-                backward(loss);
+                if (verbose) {
+                    std::cerr << "Loss (" << iter_ << "):\t" << result << std::endl;
+                }
 
-                // Adjust gradients
-                // ie. increment all parameters by 0.01 * p->grad()
+                backward(loss);
 
                 func_.adjust(learning_rate);
 
