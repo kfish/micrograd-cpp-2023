@@ -75,51 +75,21 @@ class MSELoss {
             for (size_t i = 0; i < N; ++i) {
                 predictions_[i] = RawValue<T>::make(0.0);
             }
-            //std::cerr << "Cnstrct " << this << "=&MSELoss(func_=" << &func_
-            //    << " from func=" << &func
-            //    << std::endl;
-           //std::array<double, 2> a = {2.0, -3.0};
-           //auto x = func(a);
-           //std::cerr << "Calculated x=" << x << std::endl;
         }
 
-        //Value<T> operator()(const std::array<Value<T>, N>& input, const std::array<T, N>& ground_truth) {
-        Value<T> operator()(std::array<Arg, N>& input, const std::array<T, N>& ground_truth) {
-#if 0
-            std::transform(input.begin(), input.end(), predictions_.begin(), func_);
-            //return mse_loss(predictions_, ground_truth);
-            return leaf(0.0);
-#else
-            //std::cerr << "CALC " << this << "=&MSELoss(func_=" << &func_ << std::endl;
-            std::cerr << "Predictions: ";
+        Value<T> operator()(std::array<Arg, N>& input, const std::array<T, N>& ground_truth, bool verbose=false) {
+            if (verbose) std::cerr << "Predictions: ";
             for (size_t i = 0; i < N; ++i) {
-                //std::cerr << "Calculate " << i << "th prediction, using input value " << PrettyArray<T, N>(input[i]) << std::endl;
-                //std::cerr << "Calculate " << i << "th prediction, using input value " << input[i][0] << "," << input[i][1] << std::endl;
                 predictions_[i] = func_(input[i]);
-                std::cerr << predictions_[i]->data() << " ";
+                if (verbose) std::cerr << predictions_[i]->data() << " ";
             }
-            std::cerr << '\n';
-#endif
+            if (verbose) std::cerr << '\n';
             return mse_loss(predictions_, ground_truth);
         }
 
     private:
-        //const std::function<Value<T>(const std::array<Value<T>, N>&)>& func_;
         const std::function<Value<T>(const Arg&)> func_;
         std::array<Value<T>, N> predictions_;
 };
-
-#if 0
-template <typename T, size_t N, size_t Nout>
-class Extract1 {
-    public:
-        Extract1(const std::function<std::array<std::array<Value<T>, Nout>, N>(const std::array<Value<T>, N>&) func)
-            : func_(func)
-        {
-        }
-
-        std::array<Value<T>, 
-};
-#endif
 
 };
