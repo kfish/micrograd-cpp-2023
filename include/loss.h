@@ -4,6 +4,8 @@
 #include <cmath>
 #include <numeric>
 
+#include "value.h"
+
 namespace ai {
 
 // Template function for double

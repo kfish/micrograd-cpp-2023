@@ -1,8 +1,5 @@
 #include <iostream>
-#include <fstream>
 
-#include "randomdata.h"
-#include "loss.h"
 #include "backprop.h"
 #include "nn.h"
 #include "graph.h"
@@ -30,6 +27,6 @@ int main(int argc, char *argv[])
     double learning_rate = 0.01;
 
     auto backprop = BackProp<double, 4, std::array<double, 3>>(n, "loss.tsv");
-    double loss = backprop(input, y, learning_rate, 1000);
+    double loss = backprop(input, y, learning_rate, 100000);
 }
 

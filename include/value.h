@@ -50,9 +50,7 @@ class RawValue {
         }
 
         void adjust(const T& learning_rate) {
-            //std::cerr << "ADJUST: learning_rate=" << learning_rate << "\tgrad_=" << grad_ << "\tOLD data_=" << data_;
-            data_ -= -learning_rate * grad_;
-            //std::cerr << "\tNEW data_=" << data_ << std::endl;
+            data_ += -learning_rate * grad_;
         }
 
         const std::string& label() const {
@@ -153,14 +151,8 @@ class RawValue {
             auto out = make(a->data() - b->data(), children, "-");
 
             out->backward_ = [=]() {
-                a->grad_ += -out->grad_;
-                b->grad_ += out->grad_;
-                /*
-                std::cerr << "  -.grad: out=" << out
-                    << "\n  upd a=\t" << a
-                    << "\n  upd b=\t" << b
-                    << std::endl;
-                    */
+                a->grad_ += out->grad_;
+                b->grad_ += -out->grad_;
             };
 
             return out;
@@ -192,17 +184,24 @@ class RawValue {
         friend Value<T> operator*(N n, const Value<T>& a) { return make(n) * a; }
 
         // operator/
+#if 1
+        friend Value<T> operator/(const Value<T>& a, const Value<T>& b) {
+            //return a * recip(b);
+            return a * pow(b, -1.0);
+        }
+#else
         friend Value<T> operator/(const Value<T>& a, const Value<T>& b) {
             std::set<ptr> children = {a, b};
             auto out = make(a->data() / b->data(), children, "/");
 
             out->backward_ = [=]() {
                 a->grad_ += (1.0/b->data()) * out->grad();
-                b->grad_ += a->data() * pow(b->data(), -2.0) * out->grad();
+                b->grad_ += -1.0 * a->data() * pow(b->data(), -2.0) * out->grad();
             };
 
             return out;
         }
+#endif
 
         template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
         friend Value<T> operator/(const Value<T>& a, N n) { return a / make(n); }
