@@ -7,7 +7,6 @@
 #include "tuple.h"
 #include "quickmath.h"
 #include "randomdata.h"
-#include "static_index.h"
 #include "value.h"
 
 namespace ai {
