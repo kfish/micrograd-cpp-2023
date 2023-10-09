@@ -24,10 +24,14 @@ class BackPropImpl {
         {
         }
 
+        MSELoss<T, N, Arg> loss_function() const {
+            return MSELoss<T, N, Arg>(func_);
+        }
+
         T operator()(std::array<Arg, N>& input, const std::array<T, N>& ground_truth,
                 T learning_rate, int iterations)
         {
-            auto loss_f = MSELoss<T, N, Arg>(func_);
+            auto loss_f = loss_function();
             T result;
 
             for (int i=0; i < iterations; ++i) {

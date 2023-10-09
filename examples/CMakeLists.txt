@@ -13,6 +13,10 @@ include_directories(
     ${PARENT_DIR}/include
     )
 
+add_executable(regression0 regression0.cpp)
+add_test(NAME regression0
+         COMMAND regression0)
+
 add_executable(binary-classifier binary-classifier.cpp)
 add_test(NAME binary-classifier
          COMMAND binary-classifier)
