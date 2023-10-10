@@ -252,7 +252,7 @@ class RawValue {
 };
 
 template <typename T>
-using Value = RawValue<T>::ptr;
+using Value = typename RawValue<T>::ptr;
 
 template <typename T, typename... Args>
 static Value<T> leaf(const T& data, Args&&... args) {
