@@ -12,7 +12,7 @@ template <typename T>
 class RawValue;
 
 template <typename T>
-using Value = RawValue<T>::ptr;
+using Value = typename RawValue<T>::ptr;
 
 template <typename T>
 class RawValue {
