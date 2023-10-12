@@ -59,11 +59,11 @@ T mse_loss(const std::array<T, N>& predictions, const std::array<T, N>& ground_t
 
 template<typename T, size_t N>
 Value<T> mse_loss(const std::array<Value<T>, N>& predictions, const std::array<T, N>& ground_truth) {
-    Value<T> sum_squared_error = std::inner_product(predictions.begin(), predictions.end(), ground_truth.begin(), leaf<T>(0),
+    Value<T> sum_squared_error = std::inner_product(predictions.begin(), predictions.end(), ground_truth.begin(), make_value<T>(0),
         std::plus<>(),
         [](Value<T> pred, T truth) { return pow(pred - truth, 2); }
     );
-    return sum_squared_error / leaf<T>(N);
+    return sum_squared_error / make_value<T>(N);
 }
 
 template<typename T, size_t N, typename Arg>

@@ -7,7 +7,7 @@ using namespace ai;
 
 int main(int argc, char *argv[])
 {
-    std::array<Value<double>, 3> input = {leaf(0.1), leaf(0.2), leaf(0.3)};
+    std::array<Value<double>, 3> input = {make_value(0.1), make_value(0.2), make_value(0.3)};
 
     Neuron<double, 3> n;
 

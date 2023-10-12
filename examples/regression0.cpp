@@ -21,7 +21,7 @@ class Regression0 {
         }
 
         Value<double> operator()(const double& x) const {
-            return this->operator()(leaf(x));
+            return this->operator()(make_value(x));
         }
 
         void adjust(const double& learning_rate) {

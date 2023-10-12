@@ -16,7 +16,7 @@ static inline Value<T> randomValue() {
     static thread_local std::mt19937 gen(seed++);
     std::uniform_real_distribution<T> dist(-1.0, 1.0);
     seed = gen(); // update seed for next time
-    return leaf(dist(gen));
+    return make_value(dist(gen));
 }
 
 // Static inline function to generate a random std::array<T, N>

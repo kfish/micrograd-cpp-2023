@@ -20,7 +20,7 @@ class Neuron {
         }
 
         Value<T> operator()(const std::array<Value<T>, Nin>& x) const {
-            auto zero = leaf<double>(0.0);
+            auto zero = make_value<T>(0.0);
             Value<T> y = mac(weights_, x, zero) + bias_;
             return expr(tanh(y), "n");
         }

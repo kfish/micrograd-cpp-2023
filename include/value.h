@@ -255,7 +255,7 @@ template <typename T>
 using Value = typename RawValue<T>::ptr;
 
 template <typename T, typename... Args>
-static Value<T> leaf(const T& data, Args&&... args) {
+static Value<T> make_value(const T& data, Args&&... args) {
     return RawValue<T>::make(data, std::forward<Args>(args)...);
 }
 

@@ -6,9 +6,9 @@ using namespace ai;
 
 int main(int argc, char *argv[])
 {
-    auto a = leaf(2.0, "a");
-    auto b = leaf(-3.0, "b");
-    auto c = leaf(10.0, "c");
+    auto a = make_value(2.0, "a");
+    auto b = make_value(-3.0, "b");
+    auto c = make_value(10.0, "c");
 
     std::cout << *a << std::endl;
     std::cout << b << std::endl;
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 
     std::cout << (a-b) << std::endl;
 
-    auto minus1 = leaf(-1.0, "-1.0");
+    auto minus1 = make_value(-1.0, "-1.0");
     auto nb = expr(b * minus1, "nb");
     std::cout << (a + nb) << std::endl;
 
