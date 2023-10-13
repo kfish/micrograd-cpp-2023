@@ -13,6 +13,10 @@ include_directories(
     ${PARENT_DIR}/include
     )
 
+add_executable(example-usage example-usage.cpp)
+add_test(NAME example-usage
+         COMMAND example-usage)
+
 add_executable(regression0 regression0.cpp)
 add_test(NAME regression0
          COMMAND regression0)
