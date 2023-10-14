@@ -82,7 +82,6 @@ static inline std::ostream& operator<<(std::ostream& os, const NodeOp<T>& node) 
 template <typename T>
 class Graph {
     public:
-        //Graph(const Value<T>& root)
         Graph(const std::shared_ptr<RawValue<T>>& root)
             : trace_(root)
         {
