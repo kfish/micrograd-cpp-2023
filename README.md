@@ -79,6 +79,8 @@ In C++, `operator+=` requires an explicit implementation which modifies its valu
 We create a copy of the old value and re-write all earlier references in the expression graph
 to point to the copy.
 
+![c += c + 1](examples/c-plus-equals-rewrite.svg)
+
 Note that this aspect of the implementation is peculiar to the operational semantics of C++
 and in-place assignment operators. It is straightforward to implement a neural network
 without calling these operators, so the overhead of node copying and graph rewriting could
