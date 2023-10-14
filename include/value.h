@@ -118,6 +118,12 @@ class RawValue {
 
         // operator +=
         friend ptr& operator+=(ptr& a, const ptr& b) {
+            /* For producing example-usage-cycle graph: cannot backprop
+            a->data_ += b->data_;
+            a->prev_.insert(b);
+            return a;
+            */
+
             // Update a = old + b
 
             auto old = make(a->data_, a->prev_, a->op_);
