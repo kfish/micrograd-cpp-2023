@@ -1,0 +1,18 @@
+digraph G {
+  rankdir = "LR";
+  "node0x55628c103eb0" [label = "{  | data=-4.0000 | grad=0.0000 }", shape="record"]
+  "node0x55628c103fb0" [label = "{  | data=2.0000 | grad=0.0000 }", shape="record"]
+  "node0x55628c104130" [label = "{  | data=-3.0000 | grad=0.0000 }", shape="record"]
+  "node0x55628c104130+" [label = "+"]
+  "node0x55628c104130+" -> "node0x55628c104130";
+  "node0x55628c104930" [label = "{  | data=1.0000 | grad=0.0000 }", shape="record"]
+  "node0x55628c104a30" [label = "{  | data=-1.0000 | grad=0.0000 }", shape="record"]
+  "node0x55628c104a30+" [label = "+"]
+  "node0x55628c104a30+" -> "node0x55628c104a30";
+  "node0x55628c103eb0" -> "node0x55628c104130+";
+  "node0x55628c103fb0" -> "node0x55628c104130+";
+  "node0x55628c104130" -> "node0x55628c104a30+";
+  "node0x55628c104930" -> "node0x55628c104a30+";
+  "node0x55628c104a30" -> "node0x55628c104130+";
+}
+
