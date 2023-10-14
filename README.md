@@ -86,6 +86,88 @@ and in-place assignment operators. It is straightforward to implement a neural n
 without calling these operators, so the overhead of node copying and graph rewriting could
 easily be removed. We include it here only for the translation of micrograd to C++.
 
+## Buliding out the Value object
+
+> Neural nets are some pretty scary expressions. We need some data structures to maintain 
+> these expressions.
+
+In order to handle basic expressions like:
+
+```c++
+    auto a = make_value(2.0, "a");
+    auto b = make_value(-3.0, "b");
+    auto c = make_value(10.0, "c");
+
+    auto d = (a*b) + c;
+    std::cout << d << std::endl;
+```
+
+we start sketching out the underlying `RawValue` class, implementing operators for `+`
+and `*`, and storing the inputs (children) of each for the evaluation graph.
+
+```c++
+template <typename T>
+class RawValue {
+    public:
+        using ptr = std::shared_ptr<RawValue<T>>;
+
+    private:
+        RawValue(const T& data, const std::string& label="")
+            : data_(data), label_(label)
+        {}
+
+        RawValue(const T& data, std::set<ptr>& children, const std::string& op="")
+            : data_(data), prev_(children), op_(op)
+        {}
+
+    public:
+        template <typename... Args>
+        static ptr make(Args&&... args) {
+            return ptr(new RawValue<T>(std::forward<Args>(args)...));
+        }
+
+        friend ptr operator+(const ptr& a, const ptr& b) {
+            std::set<ptr> children = {a, b};
+            return make(a->data() + b->data(), children, "+");
+        }
+
+        friend ptr operator*(const ptr& a, const ptr& b) {
+            std::set<ptr> children = {a, b};
+            return make(a->data() * b->data(), children, "*");
+        }
+
+    private:
+        T data_;
+        std::set<ptr> prev_{};
+        std::string op_{""};
+};
+
+template <typename T>
+static inline std::ostream& operator<<(std::ostream& os, const RawValue<T>& value) {
+    return os << "Value("
+        << "data=" << value.data() << ", "
+        << "op=" << value.op()
+        << ")";
+}
+```
+
+In code we use `Value<T>`, which is an alias for `shared_ptr<RawValue<T>>`:
+
+```c++
+template <typename T>
+using Value = typename RawValue<T>::ptr;
+
+template <typename T, typename... Args>
+static Value<T> make_value(const T& data, Args&&... args) {
+    return RawValue<T>::make(data, std::forward<Args>(args)...);
+}
+
+template <typename T>
+static inline std::ostream& operator<<(std::ostream& os, const std::shared_ptr<RawValue<T>>& value) {
+    return os << value.get() << "=&" << *value;
+}
+```
+
 ## References
 
 ### Automatic differentiation in C++
