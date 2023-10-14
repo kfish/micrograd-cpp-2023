@@ -70,6 +70,8 @@ using Value<T> = std::shared_ptr<RawValue<T>>;
 The expression `c += c + 1` refers to itself, so it contains a cycle. This cycle needs to be
 removed in order to implement backpropagation.
 
+![c += c + 1](examples/c-plus-equals-cycle.svg)
+
 In Python, `x += y` usually translates to `x.__iadd__(y)` which modifies `x` in-place.
 However, the `Value` objects in `micrograd` don't implement `__iadd__`, so Python falls back to using `__add__` followed by assignment. That means `a += b` is roughly equivalent to `a = a + b`. Each time the + operator is invoked, a new Value object is created and the computational graph gets extended, so it is not modifying the existing objects in-place from a computational graph perspective. Rather, it's creating new nodes in the graph, extending it with more operations to backtrack during the backward() pass.
 
