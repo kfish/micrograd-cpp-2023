@@ -177,9 +177,11 @@ object for labelling graph nodes, and an `expr` factory function for creating la
 We can pipe the output of a program to `dot -Tsvg` to produce an svg image, or to `xdot` to view it interactively:
 
 ```bash
-$ build/examples/example-usage-cycle | dot -Tsvg -o cycle.svg
-$ build/examples/example-usage-cycle | xdot -
+$ build/examples/graph | dot -Tsvg -o graph.svg
+$ build/examples/graph | xdot -
 ```
+
+![Example graph](examples/graph.svg)
 
 ## References
 
