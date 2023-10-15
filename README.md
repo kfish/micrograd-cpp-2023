@@ -171,7 +171,8 @@ static inline std::ostream& operator<<(std::ostream& os, const std::shared_ptr<R
 ## Visualizing the expression graph
 
 We provide a `Graph` class that can wrap any `Value<T>`. It has a custom `operator<<` that writes in `dot`
-language. The implementation is in [include/graph.h](include/graph.h).
+language. The implementation is in [include/graph.h](include/graph.h). We also introduce a `label` to the `Value<T>`
+object for labelling graph nodes, and an `expr` factory function for creating labelled expressions.
 
 We can pipe the output of a program to `dot -Tsvg` to produce an svg image, or to `xdot` to view it interactively:
 
