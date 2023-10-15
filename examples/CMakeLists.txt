@@ -21,6 +21,10 @@ add_executable(example-usage-cycle example-usage-cycle.cpp)
 add_test(NAME example-usage-cycle
          COMMAND example-usage-cycle)
 
+add_executable(graph graph.cpp)
+add_test(NAME graph
+         COMMAND graph)
+
 add_executable(regression0 regression0.cpp)
 add_test(NAME regression0
          COMMAND regression0)
