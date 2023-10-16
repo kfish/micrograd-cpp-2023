@@ -25,6 +25,10 @@ add_executable(graph graph.cpp)
 add_test(NAME graph
          COMMAND graph)
 
+add_executable(neuron neuron.cpp)
+add_test(NAME neuron
+         COMMAND neuron)
+
 add_executable(regression0 regression0.cpp)
 add_test(NAME regression0
          COMMAND regression0)
