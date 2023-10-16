@@ -5,7 +5,7 @@
 #include "array.h"
 #include "funcy.h"
 #include "tuple.h"
-#include "quickmath.h"
+#include "mac.h"
 #include "randomdata.h"
 #include "value.h"
 
