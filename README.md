@@ -225,6 +225,8 @@ Recursively apply the local derivatives using the chain rule backwards through t
 
 Introduce activation function, using tanh.
 
+![Neuron graph](examples/neuron.svg)
+
 and also pow, exp, division
 
 ```c++
@@ -236,7 +238,6 @@ and also pow, exp, division
             auto out = make(t, children, "tanh");
 
             out->backward_ = [=]() {
-                T t = out->data_;
                 a->grad_ += (1.0 - t*t) * out->grad_;
             };
 
@@ -267,8 +268,7 @@ class Neuron {
         }
 
         Value<T> operator()(const std::array<Value<T>, Nin>& x) const {
-            auto zero = make_value<T>(0.0);
-            Value<T> y = mac(weights_, x, zero) + bias_;
+            Value<T> y = mac(weights_, x, bias_);
             return expr(tanh(y), "n");
         }
 
@@ -276,7 +276,6 @@ class Neuron {
 };
 ```
 
-![Neuron graph](examples/neuron.svg)
 
 ## Multiply-Accumulate
 
