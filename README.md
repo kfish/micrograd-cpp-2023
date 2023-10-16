@@ -183,6 +183,151 @@ $ build/examples/graph | xdot -
 
 ![Example graph](examples/graph.svg)
 
+## Backpropagation
+
+>  For each value, we're going to calculate the derivative with respect to L.
+
+We add a variable `grad_` inside the Value class that maintains the gradient with respect to L.
+
+How each operation affects the output
+`backward_` function, which we implement as a lambda function.
+This function copies the `Value` `shared_ptr`s in order to increment their reference counts.
+
+```c++
+        friend ptr operator+(const ptr& a, const ptr& b) {
+            auto out = make(a->data() + b->data(), children, "+");
+
+            out->backward_ = [=]() {
+                a->grad_ += out->grad_;
+                b->grad_ += out->grad_;
+            };
+
+            return out;
+        }
+
+        friend ptr operator*(const ptr& a, const ptr& b) {
+            std::set<ptr> children = {a, b};
+            auto out = make(a->data() * b->data(), children, "*");
+
+            out->backward_ = [=]() {
+                a->grad_ += b->data() * out->grad();
+                b->grad_ += a->data() * out->grad();
+            };
+
+            return out;
+        }
+```
+Recursively apply the local derivatives using the chain rule backwards through the expression graph
+
+        `friend void backward(const ptr& node)`
+
+## Backpropagation through a neuron
+
+Introduce activation function, using tanh.
+
+and also pow, exp, division
+
+```c++
+        friend ptr tanh(const ptr& a) {
+            std::set<ptr> children = {a};
+            double x = a->data();
+            double e2x = exp(2.0*x);
+            double t = (e2x-1)/(e2x+1);
+            auto out = make(t, children, "tanh");
+
+            out->backward_ = [=]() {
+                T t = out->data_;
+                a->grad_ += (1.0 - t*t) * out->grad_;
+            };
+
+            return out;
+        }
+```
+
+Operator specializations where one operand is an arithmetic value, so that instead of
+writing `a * make_value(7.0)` you can write `a * 7.0`:
+
+```c++
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend ptr operator*(const ptr& a, N n) { return a * make(n); }
+
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend ptr operator*(N n, const ptr& a) { return make(n) * a; }
+```
+
+We begin the implementation of a neurons, in [include/nn.h](include/nn.h).
+
+```c++
+template <typename T, size_t Nin>
+class Neuron {
+    public:
+        Neuron()
+            : weights_(randomArray<T, Nin>()), bias_(randomValue<T>())
+        {
+        }
+
+        Value<T> operator()(const std::array<Value<T>, Nin>& x) const {
+            auto zero = make_value<T>(0.0);
+            Value<T> y = mac(weights_, x, zero) + bias_;
+            return expr(tanh(y), "n");
+        }
+
+        ...
+};
+```
+
+![Neuron graph](examples/neuron.svg)
+
+## Multiply-Accumulate
+
+The implementation is in [include/mac.h](include/mac.h).
+
+Use `std::execution` to allow the compiler to choose an optimized execution method,
+allowing parallel and vectorized execution:
+
+```c++
+template <typename T, std::size_t N>
+T mac(const std::array<T, N>& a, const std::array<T, N>& b, T init = T{}) {
+    return std::transform_reduce(
+        std::execution::par_unseq, // Use parallel and vectorized execution
+        a.begin(), a.end(), // Range of first vector
+        b.begin(), // Range of second vector
+        init, //static_cast<T>(0), // Initial value
+        std::plus<>(), // Accumulate
+        std::multiplies<>() // Multiply
+    );
+}
+```
+
+## RandomArray
+
+In order to instantiate neurons statically
+create random values in deterministic order, for reproducible debugging.
+
+The implementation is in [include/random.h](include/random.h).
+
+```c++
+// Static inline function to generate a random T
+template <typename T>
+static inline Value<T> randomValue() {
+    static unsigned int seed = 42;
+    static thread_local std::mt19937 gen(seed++);
+    std::uniform_real_distribution<T> dist(-1.0, 1.0);
+    seed = gen(); // update seed for next time
+    return make_value(dist(gen));
+}
+
+// Static inline function to generate a random std::array<T, N>
+template <typename T, size_t N>
+static inline std::array<Value<T>, N> randomArray() {
+    std::array<Value<T>, N> arr;
+    for (auto& element : arr) {
+        element = randomValue<T>();
+    }
+    return arr;
+}
+```
+
 ## References
 
 ### Automatic differentiation in C++
