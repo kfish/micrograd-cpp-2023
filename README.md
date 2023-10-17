@@ -265,7 +265,7 @@ We recursively apply the local derivatives using the chain rule backwards throug
 
 ## Backpropagation through a neuron
 
-We begin the implementation of a neurons, in [include/nn.h](include/nn.h):
+We begin the implementation of a neuron, in [include/nn.h](include/nn.h):
 
 ```c++
 template <typename T, size_t Nin>
