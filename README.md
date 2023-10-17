@@ -406,7 +406,7 @@ class Layer {
 
 ### BuildLayers
 
-``c++
+```c++
 template <typename T, size_t Nin, size_t... Nouts>
 struct BuildLayers;
 
