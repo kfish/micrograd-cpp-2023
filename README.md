@@ -185,13 +185,10 @@ $ build/examples/graph | xdot -
 
 ## Backpropagation
 
->  For each value, we're going to calculate the derivative with respect to L.
+We add a member variable `grad_` that maintains the gradient with respect to the final output, here `L`.
 
-We add a variable `grad_` inside the Value class that maintains the gradient with respect to L.
-
-How each operation affects the output
-`backward_` function, which we implement as a lambda function.
-This function copies the `Value` `shared_ptr`s in order to increment their reference counts.
+How each operation affects the output is written as a lambda function, `backward_`.
+It copies the `Value` `shared_ptr`s of each node's children in order to increment their reference counts.
 
 ```c++
         friend ptr operator+(const ptr& a, const ptr& b) {
@@ -217,9 +214,39 @@ This function copies the `Value` `shared_ptr`s in order to increment their refer
             return out;
         }
 ```
-Recursively apply the local derivatives using the chain rule backwards through the expression graph
 
-        `friend void backward(const ptr& node)`
+We recursively apply the local derivatives using the chain rule backwards through the expression graph:
+
+```c++
+        friend void backward(const ptr& node) {
+            std::vector<RawValue<T>*> topo;
+            std::set<RawValue<T>*> visited;
+
+            std::function<void(const ptr&)> build_topo = [&](const ptr& v) {
+                if (!visited.contains(v.get())) {
+                    visited.insert(v.get());
+                    for (auto && c : v->children()) {
+                        build_topo(c);
+                    }
+                    topo.push_back(v.get());
+                }
+            };
+
+            build_topo(node);
+
+            for (auto & v : topo) {
+                v->grad_ = 0.0;
+            }
+
+            node->grad_ = 1.0;
+
+            for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
+                const RawValue<T>* v = *it;
+                auto f = v->backward_;
+                if (f) f();
+            }
+        }
+```
 
 ## Backpropagation through a neuron
 
@@ -279,10 +306,10 @@ class Neuron {
 
 ## Multiply-Accumulate
 
-The implementation is in [include/mac.h](include/mac.h).
-
-Use `std::execution` to allow the compiler to choose an optimized execution method,
-allowing parallel and vectorized execution:
+A neuron takes a number of input values, applies a weight to each, and sums the result. We can abstract this out as a common multiply-accumulate function.
+It is usual to use a hardware-optimized, eg. GPU, implementation.
+In order to use our explicit `Value` object, we provide a generic implementation is in [include/mac.h](include/mac.h).
+This uses `std::execution` to allow the compiler to choose an optimized execution method, allowing parallel and vectorized execution:
 
 ```c++
 template <typename T, std::size_t N>
@@ -298,10 +325,9 @@ T mac(const std::array<T, N>& a, const std::array<T, N>& b, T init = T{}) {
 }
 ```
 
-## RandomArray
+## randomValue, randomArray
 
-In order to instantiate neurons statically
-create random values in deterministic order, for reproducible debugging.
+We provide helper functions to create random values statically, in deterministic order. This helps with reproducibility for debugging.
 
 The implementation is in [include/random.h](include/random.h).
 
