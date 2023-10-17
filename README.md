@@ -97,7 +97,7 @@ and in-place assignment operators. It is straightforward to implement a neural n
 without calling these operators, so the overhead of node copying and graph rewriting could
 easily be removed. We include it here only for the translation of micrograd to C++.
 
-## Buliding out the Value object
+## Building out the Value object
 
 > Neural nets are some pretty scary expressions. We need some data structures to maintain 
 > these expressions.
