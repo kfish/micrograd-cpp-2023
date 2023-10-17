@@ -183,6 +183,184 @@ $ build/examples/graph | xdot -
 
 ![Example graph](examples/graph.svg)
 
+## Backpropagation
+
+We add a member variable `grad_` that maintains the gradient with respect to the final output.
+
+How each operation affects the output is written as a lambda function, `backward_`.
+It copies the `Value` `shared_ptr`s of each node's children in order to increment their reference counts.
+
+```c++
+        friend ptr operator+(const ptr& a, const ptr& b) {
+            auto out = make(a->data() + b->data(), children, "+");
+
+            out->backward_ = [=]() {
+                a->grad_ += out->grad_;
+                b->grad_ += out->grad_;
+            };
+
+            return out;
+        }
+
+        friend ptr operator*(const ptr& a, const ptr& b) {
+            std::set<ptr> children = {a, b};
+            auto out = make(a->data() * b->data(), children, "*");
+
+            out->backward_ = [=]() {
+                a->grad_ += b->data() * out->grad();
+                b->grad_ += a->data() * out->grad();
+            };
+
+            return out;
+        }
+```
+
+We recursively apply the local derivatives using the chain rule backwards through the expression graph:
+
+```c++
+        friend void backward(const ptr& node) {
+            std::vector<RawValue<T>*> topo;
+            std::set<RawValue<T>*> visited;
+
+            std::function<void(const ptr&)> build_topo = [&](const ptr& v) {
+                if (!visited.contains(v.get())) {
+                    visited.insert(v.get());
+                    for (auto && c : v->children()) {
+                        build_topo(c);
+                    }
+                    topo.push_back(v.get());
+                }
+            };
+
+            build_topo(node);
+
+            for (auto & v : topo) {
+                v->grad_ = 0.0;
+            }
+
+            node->grad_ = 1.0;
+
+            for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
+                const RawValue<T>* v = *it;
+                auto f = v->backward_;
+                if (f) f();
+            }
+        }
+```
+
+## Backpropagation through a neuron
+
+We begin the implementation of a neurons, in [include/nn.h](include/nn.h):
+
+```c++
+template <typename T, size_t Nin>
+class Neuron {
+    public:
+        Neuron()
+            : weights_(randomArray<T, Nin>()), bias_(randomValue<T>())
+        {
+        }
+
+        Value<T> operator()(const std::array<Value<T>, Nin>& x) const {
+            Value<T> y = mac(weights_, x, bias_);
+            return expr(tanh(y), "n");
+        }
+
+        ...
+};
+```
+
+The resulting expression graph for a neuron with four inputs:
+
+![Neuron graph](examples/neuron.svg)
+
+### Activation function
+
+In general an activation function modifies the output of a neuron, perhaps so that all neurons have similar ranges of output value or to smooth or filter large and negative values.
+Whichever activation function we use, we need to implement a `backward_` function.
+This implementation includes `relu` (which just replaces any negative values with zero) and `tanh`, which squashes the output into the range ±1.0. `tanh` is used in the video and has an obvious and continuous effect on the gradient:
+
+```c++
+        friend ptr tanh(const ptr& a) {
+            std::set<ptr> children = {a};
+            double x = a->data();
+            double e2x = exp(2.0*x);
+            double t = (e2x-1)/(e2x+1);
+            auto out = make(t, children, "tanh");
+
+            out->backward_ = [=]() {
+                a->grad_ += (1.0 - t*t) * out->grad_;
+            };
+
+            return out;
+        }
+```
+
+### C++ implementation notes
+
+We must implement all required math operations on `Value<T>`, including pow, exp, and division,
+so that we can accumulate gradients and run backpropagation.
+
+For convenience we also provide operator specializations where one operand is an arithmetic value, so that instead of
+writing `a * make_value(7.0)` you can write `a * 7.0` or `7.0 * a`:
+
+```c++
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend ptr operator*(const ptr& a, N n) { return a * make(n); }
+
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend ptr operator*(N n, const ptr& a) { return make(n) * a; }
+```
+
+### Multiply-Accumulate
+
+A neuron takes a number of input values, applies a weight to each, and sums the result. We can abstract this out as a common multiply-accumulate function.
+It is usual to use a hardware-optimized, eg. GPU, implementation.
+In order to use our explicit `Value` object, we provide a generic implementation is in [include/mac.h](include/mac.h).
+This uses `std::execution` to allow the compiler to choose an optimized execution method, allowing parallel and vectorized execution:
+
+```c++
+template <typename T, std::size_t N>
+T mac(const std::array<T, N>& a, const std::array<T, N>& b, T init = T{}) {
+    return std::transform_reduce(
+        std::execution::par_unseq, // Use parallel and vectorized execution
+        a.begin(), a.end(), // Range of first vector
+        b.begin(), // Range of second vector
+        init, //static_cast<T>(0), // Initial value
+        std::plus<>(), // Accumulate
+        std::multiplies<>() // Multiply
+    );
+}
+```
+
+### randomValue, randomArray
+
+We provide helper functions to create random values statically, in deterministic order. This helps with reproducibility for debugging.
+
+The implementation is in [include/random.h](include/random.h).
+
+```c++
+// Static inline function to generate a random T
+template <typename T>
+static inline Value<T> randomValue() {
+    static unsigned int seed = 42;
+    static thread_local std::mt19937 gen(seed++);
+    std::uniform_real_distribution<T> dist(-1.0, 1.0);
+    seed = gen(); // update seed for next time
+    return make_value(dist(gen));
+}
+
+// Static inline function to generate a random std::array<T, N>
+template <typename T, size_t N>
+static inline std::array<Value<T>, N> randomArray() {
+    std::array<Value<T>, N> arr;
+    for (auto& element : arr) {
+        element = randomValue<T>();
+    }
+    return arr;
+}
+```
+
 ## References
 
 ### Automatic differentiation in C++

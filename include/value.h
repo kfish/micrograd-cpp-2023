@@ -278,7 +278,6 @@ class RawValue {
             auto out = make(t, children, "tanh");
 
             out->backward_ = [=]() {
-                T t = out->data_;
                 a->grad_ += (1.0 - t*t) * out->grad_;
             };
 

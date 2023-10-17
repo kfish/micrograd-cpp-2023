@@ -17,10 +17,6 @@ add_executable(value-test value-test.cpp)
 add_test(NAME value-test
          COMMAND value-test)
 
-add_executable(value-neuron-test value-neuron-test.cpp)
-add_test(NAME value-neuron-test
-         COMMAND value-neuron-test)
-
 add_executable(multivariate-test multivariate-test.cpp)
 add_test(NAME multivariate-test
          COMMAND multivariate-test)

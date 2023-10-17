@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "quickmath.h"
+#include "mac.h"
 
 int main(int argc, char *argv[])
 {
