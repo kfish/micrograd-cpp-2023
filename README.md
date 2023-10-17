@@ -285,7 +285,7 @@ class Neuron {
 };
 ```
 
-The resulting expression graph for a neuron with four inputs:
+The resulting expression graph for a neuron with four inputs (code in [examples/neuron.cpp](examples/neuron.cpp)):
 
 ![Neuron graph](examples/neuron.svg)
 
