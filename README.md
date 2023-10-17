@@ -384,7 +384,7 @@ static inline std::array<Value<T>, N> randomArray() {
 }
 ```
 
-## Multi-Layer Perceptron](#multi-layer-perceptron)
+## Multi-Layer Perceptron
 
 ### Layer
 
