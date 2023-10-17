@@ -16,6 +16,17 @@ using a `std::function` attached to each graph node to calculate its gradient.
 This implementation allows computations using `Value` objects to be written as
 normal-looking C++ code.
 
+ * [Example usage](#example-usage)
+ * [C++ implementation notes](#c-implementation-notes)
+ * [Building out the Value object](#building-out-the-value-object)
+ * [Visualizing the expression graph](#visualizing-the-expression-graph)
+ * [Backpropagation](#backpropagation)
+ * [Backpropagation through a neuron](#backpropagation-through-a-neuron)
+ * [Activation function](#activation-function)
+ * [C++ implementation notes](#c-implementation-notes)
+   - [Multiply-Accumulate](#multiply-accumulate)
+   - [randomValue, randomArray](#randomvalue-randomarray)
+
 
 ### Example usage
 
