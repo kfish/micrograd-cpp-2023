@@ -185,7 +185,7 @@ $ build/examples/graph | xdot -
 
 ## Backpropagation
 
-We add a member variable `grad_` that maintains the gradient with respect to the final output, here `L`.
+We add a member variable `grad_` that maintains the gradient with respect to the final output.
 
 How each operation affects the output is written as a lambda function, `backward_`.
 It copies the `Value` `shared_ptr`s of each node's children in order to increment their reference counts.
@@ -250,40 +250,7 @@ We recursively apply the local derivatives using the chain rule backwards throug
 
 ## Backpropagation through a neuron
 
-Introduce activation function, using tanh.
-
-![Neuron graph](examples/neuron.svg)
-
-and also pow, exp, division
-
-```c++
-        friend ptr tanh(const ptr& a) {
-            std::set<ptr> children = {a};
-            double x = a->data();
-            double e2x = exp(2.0*x);
-            double t = (e2x-1)/(e2x+1);
-            auto out = make(t, children, "tanh");
-
-            out->backward_ = [=]() {
-                a->grad_ += (1.0 - t*t) * out->grad_;
-            };
-
-            return out;
-        }
-```
-
-Operator specializations where one operand is an arithmetic value, so that instead of
-writing `a * make_value(7.0)` you can write `a * 7.0`:
-
-```c++
-        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
-        friend ptr operator*(const ptr& a, N n) { return a * make(n); }
-
-        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
-        friend ptr operator*(N n, const ptr& a) { return make(n) * a; }
-```
-
-We begin the implementation of a neurons, in [include/nn.h](include/nn.h).
+We begin the implementation of a neurons, in [include/nn.h](include/nn.h):
 
 ```c++
 template <typename T, size_t Nin>
@@ -303,8 +270,49 @@ class Neuron {
 };
 ```
 
+The resulting expression graph for a neuron with four inputs:
 
-## Multiply-Accumulate
+![Neuron graph](examples/neuron.svg)
+
+### Activation function
+
+In general an activation function modifies the output of a neuron, perhaps so that all neurons have similar ranges of output value or to smooth or filter large and negative values.
+Whichever activation function we use, we need to implement a `backward_` function.
+This implementation includes `relu` (which just replaces any negative values with zero) and `tanh`, which squashes the output into the range ±1.0. `tanh` is used in the video and has an obvious and continuous effect on the gradient:
+
+```c++
+        friend ptr tanh(const ptr& a) {
+            std::set<ptr> children = {a};
+            double x = a->data();
+            double e2x = exp(2.0*x);
+            double t = (e2x-1)/(e2x+1);
+            auto out = make(t, children, "tanh");
+
+            out->backward_ = [=]() {
+                a->grad_ += (1.0 - t*t) * out->grad_;
+            };
+
+            return out;
+        }
+```
+
+### C++ implementation notes
+
+We must implement all required math operations on `Value<T>`, including pow, exp, and division,
+so that we can accumulate gradients and run backpropagation.
+
+For convenience we also provide operator specializations where one operand is an arithmetic value, so that instead of
+writing `a * make_value(7.0)` you can write `a * 7.0` or `7.0 * a`:
+
+```c++
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend ptr operator*(const ptr& a, N n) { return a * make(n); }
+
+        template<typename N, std::enable_if_t<std::is_arithmetic<N>::value, int> = 0>
+        friend ptr operator*(N n, const ptr& a) { return make(n) * a; }
+```
+
+### Multiply-Accumulate
 
 A neuron takes a number of input values, applies a weight to each, and sums the result. We can abstract this out as a common multiply-accumulate function.
 It is usual to use a hardware-optimized, eg. GPU, implementation.
@@ -325,7 +333,7 @@ T mac(const std::array<T, N>& a, const std::array<T, N>& b, T init = T{}) {
 }
 ```
 
-## randomValue, randomArray
+### randomValue, randomArray
 
 We provide helper functions to create random values statically, in deterministic order. This helps with reproducibility for debugging.
 
