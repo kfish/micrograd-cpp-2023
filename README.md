@@ -6,17 +6,21 @@ Each step of the first episode of *Neural Nets: Zero to Hero*:
 [The spelled-out intro to neural networks and backpropagation: building micrograd](https://youtu.be/VMj-3S1tku0)
 is included.
 
+This roughly follows the flow of Karpathy's YouTube tutorial, with details specific to this C++ implementation:
+
  * [What is micrograd-cpp and why is it interesting?](#what-is-micrograd-cpp-and-why-is-it-interesting)
- * [Example usage](#example-usage)
- * [C++ implementation notes](#c-implementation-notes)
+   - [Example usage](#example-usage)
+   - [C++ implementation notes](#c-implementation-notes)
  * [Building out the Value object](#building-out-the-value-object)
  * [Visualizing the expression graph](#visualizing-the-expression-graph)
  * [Backpropagation](#backpropagation)
  * [Backpropagation through a neuron](#backpropagation-through-a-neuron)
- * [Activation function](#activation-function)
- * [C++ implementation notes](#c-implementation-notes)
+   - [Activation function](#activation-function)
+   - [Math operations](#math-operations)
    - [Multiply-Accumulate](#multiply-accumulate)
    - [randomValue, randomArray](#randomvalue-randomarray)
+
+with [References](#references) at the end for further reading about automatic differentiation and C++ implementations.
 
 ## What is micrograd-cpp and why is it interesting?
 
@@ -307,7 +311,7 @@ This implementation includes `relu` (which just replaces any negative values wit
         }
 ```
 
-### C++ implementation notes
+### Math operations
 
 We must implement all required math operations on `Value<T>`, including pow, exp, and division,
 so that we can accumulate gradients and run backpropagation.
