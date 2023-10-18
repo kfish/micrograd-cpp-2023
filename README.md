@@ -19,6 +19,14 @@ This roughly follows the flow of Karpathy's YouTube tutorial, with details speci
    - [Math operations](#math-operations)
    - [Multiply-Accumulate](#multiply-accumulate)
    - [randomValue, randomArray](#randomvalue-randomarray)
+ * [Multi-Layer Perceptron](#multi-layer-perceptron)
+   - [Layer](#layer)
+   - [BuildLayers](#buildlayers)
+   - [MLP](#mlp)
+ * [Loss function](#loss-function)
+   - [Parameters](#parameters)
+   - [MLP1](#mlp1)
+ * [Gradient descent](#gradient-descent)
 
 with [References](#references) at the end for further reading about automatic differentiation and C++ implementations.
 
@@ -375,6 +383,134 @@ static inline std::array<Value<T>, N> randomArray() {
     return arr;
 }
 ```
+
+## Multi-Layer Perceptron
+
+We arrange neurons in a series of layers. Each layer is just an array of neurons.
+
+A layer `Layer<T, Nin, Nout>` consists of `Nout` neurons, and is callable:
+  * The same input (array of `Nin` values) is passed to each of the neurons
+  * Each neuron produces a single output value
+  * These output values are collected into an output array of `Nout` values.
+
+### Layer
+
+```c++
+template <typename T, size_t Nin, size_t Nout>
+class Layer {
+    public:
+
+        std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& x) {
+            return map_array<Neuron<T, Nin>, std::array<Value<T>, Nin>, Value<T>, Nout>(neurons_, x);
+
+    private:
+        std::array<Neuron<T, Nin>, Nout> neurons_{};
+};
+```
+
+### BuildLayers
+
+We introduce a helper type that allows us to specify a sequence of layers of different sizes.
+
+```c++
+template <typename T, size_t Nin, size_t... Nouts>
+struct BuildLayers;
+
+template <typename T, size_t Nin, size_t First, size_t... Rest>
+struct BuildLayers<T, Nin, First, Rest...> {
+    using type = decltype(std::tuple_cat(
+        std::tuple<Layer<T, Nin, First>>{},
+        typename BuildLayers<T, First, Rest...>::type{}
+    ));
+    static constexpr size_t nout = BuildLayers<T, First, Rest...>::nout;
+};
+
+template <typename T, size_t Nin, size_t Last>
+struct BuildLayers<T, Nin, Last> {
+    using type = std::tuple<Layer<T, Nin, Last>>;
+    static constexpr size_t nout = Last;
+};
+```
+
+We make an alias for the type of such a sequence, like `Layers<3, 4, 4, 1>`:
+
+```c++
+template <typename T, size_t Nin, size_t... Nouts>
+using Layers = typename BuildLayers<T, Nin, Nouts...>::type;
+```
+
+and a helper to extract the final number of outputs, eg. `LayersNout<3, 4, 4, 1>` is 1:
+
+```c++
+template <typename T, size_t Nin, size_t... Nouts>
+static constexpr size_t LayersNout = BuildLayers<T, Nin, Nouts...>::nout;
+```
+
+### MLP
+
+Finaly we use `Layers<>` in a class `MLP<>`, which:
+  * Forwards its input to the first layer
+  * Passes the output of each layer to the next layer, in turn
+  * Returns the output of the last layer
+
+```c++
+template <typename T, size_t Nin, size_t... Nouts>
+class MLP {
+public:
+    static constexpr size_t Nout = LayersNout<T, Nin, Nouts...>;
+
+    std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& input) {
+        return forward<0, Nin, Nouts...>(input);
+    }
+
+    std::array<Value<T>, Nout> operator()(const std::array<T, Nin>& input) {
+        return this->operator()(value_array(input));
+    }
+
+private:
+    template <size_t I, size_t NinCurr, size_t NoutCurr, size_t... NoutsRest>
+    auto forward(const std::array<Value<T>, NinCurr>& input) -> decltype(auto) {
+        auto & p = std::get<I>(layers_);
+        auto output = std::get<I>(layers_)(input);
+        if constexpr (sizeof...(NoutsRest) > 0) {
+            return forward<I + 1, NoutCurr, NoutsRest...>(output);
+        } else {
+            return output;
+        }
+    }
+
+private:
+    Layers<T, Nin, Nouts...> layers_;
+
+};
+```
+
+## Loss function
+
+### Parameters
+
+### MLP1
+
+```c++
+template <typename T, size_t Nin, size_t... Nouts>
+class MLP1 : public MLP<T, Nin, Nouts...>
+{
+    public:
+        MLP1()
+            : MLP<T, Nin, Nouts...>()
+        {}
+
+        Value<T> operator()(const std::array<Value<T>, Nin>& input) {
+            return MLP<T, Nin, Nouts...>::operator()(input)[0];
+        }
+
+        Value<T> operator()(const std::array<T, Nin>& input) {
+            return MLP<T, Nin, Nouts...>::operator()(input)[0];
+        }
+};
+```
+
+## Gradient descent
 
 ## References
 
