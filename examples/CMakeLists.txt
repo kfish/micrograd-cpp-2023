@@ -29,6 +29,10 @@ add_executable(neuron neuron.cpp)
 add_test(NAME neuron
          COMMAND neuron)
 
+add_executable(mlp1 mlp1.cpp)
+add_test(NAME mlp1
+         COMMAND mlp1)
+
 add_executable(regression0 regression0.cpp)
 add_test(NAME regression0
          COMMAND regression0)
