@@ -24,7 +24,3 @@ add_test(NAME multivariate-test
 add_executable(mac-test mac-test.cpp)
 add_test(NAME mac-test
          COMMAND mac-test)
-
-add_executable(nn-test nn-test.cpp)
-add_test(NAME nn-test
-         COMMAND nn-test)

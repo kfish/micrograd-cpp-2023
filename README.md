@@ -23,10 +23,15 @@ This roughly follows the flow of Karpathy's YouTube tutorial, with details speci
    - [Layer](#layer)
    - [BuildLayers](#buildlayers)
    - [MLP](#mlp)
- * [Loss function](#loss-function)
-   - [Parameters](#parameters)
    - [MLP1](#mlp1)
+ * [Loss function](#loss-function)
+   - [MSELoss](#mseloss)
  * [Gradient descent](#gradient-descent)
+   - [Adjusting parameters](#adjusting-parameters)
+   - [CanBackProp](#canbackprop)
+   - [BackProp](#backprop)
+   - [Binary Classifier](#binary-classifier)
+   - [Loss Plot](#loss-plot)
 
 with [References](#references) at the end for further reading about automatic differentiation and C++ implementations.
 
@@ -485,11 +490,10 @@ private:
 };
 ```
 
-## Loss function
-
-### Parameters
-
 ### MLP1
+
+If we want a single-valued output from our neural network, we create a wrapper class `MLP1<>` that returns only the first element
+of the output of the wrapped `MLP<>`:
 
 ```c++
 template <typename T, size_t Nin, size_t... Nouts>
@@ -510,7 +514,307 @@ class MLP1 : public MLP<T, Nin, Nouts...>
 };
 ```
 
+With the following code from [examples/mlp1.cpp](examples/mlp1.cpp) we can make a 3 layer neural net with 1 output,
+run backpropagation over it and show the resulting expression graph:
+
+```c++
+    MLP1<double, 3, 4, 4, 1> n;
+
+    std::array<double, 3> input = {{ 2.0, 3.0, -1.0 }};
+    auto output = n(input);
+
+    backward(output);
+
+    std::cout << Graph(output) << std::endl;
+```
+
+![MLP1 graph](examples/mlp1.svg)
+
+## Loss function
+
+Now that we can make a neural net, run it forwards to produce a value and backwards to calculate gradients, we can begin adjusting it to learn.
+
+We introduce generic evaluation and learning classes for anything that can produce `Value<T>`.
+
+### MSELoss
+
+We evaluate a prediction against a known "ground truth". The difference between these is the *Error*, and we
+take the square of the error to approximate distance.
+We average these out when considering an array of predictions and their ground truths. This is the Mean Squared Error.
+
+Implementation in [include/loss.h](include/loss.h).
+
+```c++
+template <typename T>
+Value<T> mse_loss(const Value<T>& predicted, const Value<T>& ground_truth) {
+    static_assert(std::is_arithmetic<T>::value, "Type must be arithmetic");
+    return pow(predicted - ground_truth, 2);
+}
+```
+
+```c++
+template<typename T, size_t N>
+Value<T> mse_loss(const std::array<Value<T>, N>& predictions, const std::array<T, N>& ground_truth) {
+    Value<T> sum_squared_error = std::inner_product(predictions.begin(), predictions.end(), ground_truth.begin(), make_value<T>(0),
+        std::plus<>(),
+        [](Value<T> pred, T truth) { return pow(pred - truth, 2); }
+    );
+    return sum_squared_error / make_value<T>(N);
+}
+```
+
+We provide a wrapper class to calculate the Mean Squared Error of any `std::function<Value<T>(const Arg&)>`:
+
+```c++
+template<typename T, size_t N, typename Arg>
+class MSELoss {
+    public:
+        MSELoss(const std::function<Value<T>(const Arg&)>& func)
+            : func_(func)
+        {
+        }
+
+        Value<T> operator()(std::array<Arg, N>& input, const std::array<T, N>& ground_truth, bool verbose=false) {
+            if (verbose) std::cerr << "Predictions: ";
+            for (size_t i = 0; i < N; ++i) {
+                predictions_[i] = func_(input[i]);
+                if (verbose) std::cerr << predictions_[i]->data() << " ";
+            }
+            if (verbose) std::cerr << '\n';
+            return mse_loss(predictions_, ground_truth);
+        }
+
+    private:
+        const std::function<Value<T>(const Arg&)> func_;
+        std::array<Value<T>, N> predictions_;
+};
+```
+
 ## Gradient descent
+
+The gradients calculated by running `backward(loss)` annotate how each parameter contributes to the error loss.
+By adjusting each parameter down (against the gradient) we aim to minimize the error.
+
+### Adjusting parameters
+
+We introduce an `adjust()` function in `Value<T>` to modify `data_` according to the calculated gradient `grad_`.
+This takes a parameter `learning_rate`, usually in the range `[0.0 .. 1.0]` to scale of the adjustment:
+
+```c++
+        void adjust(const T& learning_rate) {
+            data_ += -learning_rate * grad_;
+        }
+```
+
+We then provide `adjust()` functions to adjust all the parameters of an neural net: the weights and bias of a Neuron:
+
+```c++
+template <typename T, size_t Nin>
+class Neuron {
+    ...
+        const std::array<Value<T>, Nin>& weights() const {
+            return weights_;
+        }
+
+        Value<T> bias() const {
+            return bias_;
+        }
+
+        void adjust_weights(const T& learning_rate) {
+            for (const auto& w : weights_) {
+                w->adjust(learning_rate);
+            }
+        }
+
+        void adjust_bias(const T& learning_rate) {
+            bias_->adjust(learning_rate);
+        }
+
+        void adjust(const T& learning_rate) {
+            adjust_weights(learning_rate);
+            adjust_bias(learning_rate);
+        }
+    ...
+};
+```
+
+then adjust all the Neurons in a Layer:
+
+```c++
+template <typename T, size_t Nin, size_t Nout>
+class Layer {
+    ...
+        void adjust(const T& learning_rate) {
+            for (auto & n : neurons_) {
+                n.adjust(learning_rate);
+            }
+        }
+    ...
+};
+```
+
+and all the Layers in an MLP:
+
+```c++
+template<typename T, typename... Ls>
+void layers_adjust(std::tuple<Ls...>& layers, const T& learning_rate) {
+    std::apply([&learning_rate](auto&... layer) {
+        // Use fold expression to call adjust on each layer
+        (..., layer.adjust(learning_rate));
+    }, layers);
+}
+```
+
+```c++
+template <typename T, size_t Nin, size_t... Nouts>
+class MLP {
+    ...
+        void adjust(const T& learning_rate) {
+            layers_adjust(layers_, learning_rate);
+        }
+    ...
+};
+```
+
+### CanBackProp
+
+We introduce a concept `CanBackProp` to describe any function that can be evaluated and adjusted:
+
+```c++
+template <typename F, typename T, typename Arg>
+concept CanBackProp = requires(F f, Arg arg, T learning_rate) {
+    { f(arg) } -> std::convertible_to<Value<T>>;
+    { f.adjust(learning_rate) } -> std::convertible_to<void>;
+};
+```
+
+For example, `CanBackProp` is true for `MLP1`.
+
+### BackProp
+
+We create a wrapper class for any function that matches the `CanBackProp` concept. This class is callable
+with input and ground truth arguments, which are used to iteratively:
+  * make predictions
+  * evaluate error loss against ground truth
+  * adjust parameters to minimize loss
+
+The loss at each step is recorded in an output file `loss_path`.
+
+```c++
+template<typename T, size_t N, typename Arg, typename F>
+class BackPropImpl {
+    public:
+        BackPropImpl(const F& func, const std::string& loss_path)
+            : func_(func), loss_output_(loss_path)
+        {
+        }
+
+        MSELoss<T, N, Arg> loss_function() const {
+            return MSELoss<T, N, Arg>(func_);
+        }
+
+        T operator()(std::array<Arg, N>& input, const std::array<T, N>& ground_truth,
+                T learning_rate, int iterations, bool verbose=false)
+        {
+            auto loss_f = loss_function();
+            T result;
+
+            for (int i=0; i < iterations; ++i) {
+                Value<T> loss = loss_f(input, ground_truth, verbose);
+
+                result = loss->data();
+                loss_output_ << iter_ << '\t' << result << '\n';
+
+                if (verbose) {
+                    std::cerr << "Loss (" << iter_ << "):\t" << result << std::endl;
+                }
+
+                backward(loss);
+
+                func_.adjust(learning_rate);
+
+                ++iter_;
+            }
+
+            return result;
+        }
+
+    private:
+        F func_;
+        std::ofstream loss_output_;
+        int iter_{0};
+};
+```
+
+The helper `BackProp` template allows us to instantiate without specifying the type of `F`, as the compiler can infer it from the constructor argument:
+
+```c++
+template<typename T, size_t N, typename Arg, typename F>
+requires CanBackProp<F, T, Arg>
+auto BackProp(const F& func, const std::string& loss_path)
+{
+    return BackPropImpl<T, N, Arg, F>(func, loss_path);
+}
+```
+
+### Binary Classifier
+
+Full example: [binary-classifier.cpp](examples/binary-classifier.cpp):
+
+```c++
+#include <iostream>
+
+#include "backprop.h"
+#include "nn.h"
+
+using namespace ai;
+
+int main(int argc, char *argv[])
+{
+    // Define a neural net
+    MLP1<double, 3, 4, 4, 1> n;
+
+    std::cerr << n << std::endl;
+
+    std::array<std::array<double,3>, 4> input = {{
+        {2.0, 3.0, -1.0},
+        {3.0, -1.0, 0.5},
+        {0.5, 1.0, 1.0},
+        {1.0, 1.0, -1.0}
+    }};
+
+    std::array<double, 4> y = {1.0, -1.0, -1.0, 1.0};
+    std::cerr << "y (gt):\t" << PrettyArray(y) << std::endl;
+
+    // Run backprop
+    double learning_rate = 0.01;
+
+    auto backprop = BackProp<double, 4, std::array<double, 3>>(n, "loss.tsv");
+    double loss = backprop(input, y, learning_rate, 10000, true);
+}
+```
+
+### Loss Plot
+
+We can plot the loss values over iterations using [loss_plot.gp](loss_plot.gp):
+
+```gnuplot
+set logscale y
+set xlabel "Iterations"
+set ylabel "Loss"
+set terminal svg
+set output "loss.svg"
+set object 1 rect from screen 0,0 to screen 1,1 behind fillcolor rgb "white" fillstyle solid 1.0
+plot "loss.tsv" using 1:2 with lines title "Loss vs Iteration"
+```
+
+```bash
+$ gnuplot loss_plot.gp
+```
+
+![loss.svg](examples/loss.svg)
+
+This shows the loss reduction during training.
 
 ## References
 
