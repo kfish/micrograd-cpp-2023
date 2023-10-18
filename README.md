@@ -697,6 +697,8 @@ with input and ground truth arguments, which are used to iteratively:
   * evaluate error loss against ground truth
   * adjust parameters to minimize loss
 
+The loss at each step is recorded in an output file `loss_path`.
+
 ```c++
 template<typename T, size_t N, typename Arg, typename F>
 class BackPropImpl {
