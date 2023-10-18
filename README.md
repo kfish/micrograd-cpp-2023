@@ -386,15 +386,19 @@ static inline std::array<Value<T>, N> randomArray() {
 
 ## Multi-Layer Perceptron
 
+We arrange neurons in a series of layers. Each layer is just an array of neurons.
+
+A layer `Layer<T, Nin, Nout>` consists of `Nout` neurons, and is callable:
+  * The same input (array of `Nin` values) is passed to each of the neurons
+  * Each neuron produces a single output value
+  * These output values are collected into an output array of `Nout` values.
+
 ### Layer
 
 ```c++
 template <typename T, size_t Nin, size_t Nout>
 class Layer {
     public:
-        Layer()
-        {
-        }
 
         std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& x) {
             return map_array<Neuron<T, Nin>, std::array<Value<T>, Nin>, Value<T>, Nout>(neurons_, x);
@@ -405,6 +409,8 @@ class Layer {
 ```
 
 ### BuildLayers
+
+We introduce a helper type that allows us to specify a sequence of layers of different sizes.
 
 ```c++
 template <typename T, size_t Nin, size_t... Nouts>
@@ -426,10 +432,14 @@ struct BuildLayers<T, Nin, Last> {
 };
 ```
 
+We make an alias for the type of such a sequence, like `Layers<3, 4, 4, 1>`:
+
 ```c++
 template <typename T, size_t Nin, size_t... Nouts>
 using Layers = typename BuildLayers<T, Nin, Nouts...>::type;
 ```
+
+and a helper to extract the final number of outputs, eg. `LayersNout<3, 4, 4, 1>` is 1:
 
 ```c++
 template <typename T, size_t Nin, size_t... Nouts>
@@ -437,6 +447,11 @@ static constexpr size_t LayersNout = BuildLayers<T, Nin, Nouts...>::nout;
 ```
 
 ### MLP
+
+Finaly we use `Layers<>` in a class `MLP<>`, which:
+  * Forwards its input to the first layer
+  * Passes the output of each layer to the next layer, in turn
+  * Returns the output of the last layer
 
 ```c++
 template <typename T, size_t Nin, size_t... Nouts>
