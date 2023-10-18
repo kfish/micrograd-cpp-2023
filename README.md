@@ -26,8 +26,8 @@ This roughly follows the flow of Karpathy's YouTube tutorial, with details speci
    - [MLP1](#mlp1)
  * [Loss function](#loss-function)
    - [MSELoss](#mseloss)
-   - [Parameters](#parameters)
  * [Gradient descent](#gradient-descent)
+   - [Adjusting parameters](#adjusting-parameters)
    - [CanBackProp](#canbackprop)
    - [BackProp](#backprop)
    - [Binary Classifier](#binary-classifier)
@@ -589,7 +589,23 @@ class MSELoss {
 };
 ```
 
-### Parameters
+## Gradient descent
+
+The gradients calculated by running `backward(loss)` annotate how each parameter contributes to the error loss.
+By adjusting each parameter down (against the gradient) we aim to minimize the error.
+
+### Adjusting parameters
+
+We introduce an `adjust()` function in `Value<T>` to modify `data_` according to the calculated gradient `grad_`.
+This takes a parameter `learning_rate`, usually in the range `[0.0 .. 1.0]` to scale of the adjustment:
+
+```c++
+        void adjust(const T& learning_rate) {
+            data_ += -learning_rate * grad_;
+        }
+```
+
+We then provide `adjust()` functions to adjust all the parameters of an neural net: the weights and bias of a Neuron:
 
 ```c++
 template <typename T, size_t Nin>
@@ -621,6 +637,8 @@ class Neuron {
 };
 ```
 
+then adjust all the Neurons in a Layer:
+
 ```c++
 template <typename T, size_t Nin, size_t Nout>
 class Layer {
@@ -633,6 +651,8 @@ class Layer {
     ...
 };
 ```
+
+and all the Layers in an MLP:
 
 ```c++
 template<typename T, typename... Ls>
@@ -654,11 +674,6 @@ class MLP {
     ...
 };
 ```
-
-## Gradient descent
-
-The gradients calculated by running `backward(loss)` annotate how each parameter contributes to the error loss.
-By adjusting each parameter down (against the gradient) we aim to minimize the error.
 
 ### CanBackProp
 
