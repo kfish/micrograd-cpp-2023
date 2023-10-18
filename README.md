@@ -23,10 +23,10 @@ This roughly follows the flow of Karpathy's YouTube tutorial, with details speci
    - [Layer](#layer)
    - [BuildLayers](#buildlayers)
    - [MLP](#mlp)
+   - [MLP1](#mlp1)
  * [Loss function](#loss-function)
    - [Parameters](#parameters)
    - [MSELoss](#mseloss)
-   - [MLP1](#mlp1)
  * [Gradient descent](#gradient-descent)
    - [CanBackProp](#canbackprop)
    - [BackProp](#backprop)
@@ -489,6 +489,27 @@ private:
 };
 ```
 
+### MLP1
+
+```c++
+template <typename T, size_t Nin, size_t... Nouts>
+class MLP1 : public MLP<T, Nin, Nouts...>
+{
+    public:
+        MLP1()
+            : MLP<T, Nin, Nouts...>()
+        {}
+
+        Value<T> operator()(const std::array<Value<T>, Nin>& input) {
+            return MLP<T, Nin, Nouts...>::operator()(input)[0];
+        }
+
+        Value<T> operator()(const std::array<T, Nin>& input) {
+            return MLP<T, Nin, Nouts...>::operator()(input)[0];
+        }
+};
+```
+
 ## Loss function
 
 ### Parameters
@@ -607,26 +628,7 @@ class MSELoss {
 };
 ```
 
-### MLP1
 
-```c++
-template <typename T, size_t Nin, size_t... Nouts>
-class MLP1 : public MLP<T, Nin, Nouts...>
-{
-    public:
-        MLP1()
-            : MLP<T, Nin, Nouts...>()
-        {}
-
-        Value<T> operator()(const std::array<Value<T>, Nin>& input) {
-            return MLP<T, Nin, Nouts...>::operator()(input)[0];
-        }
-
-        Value<T> operator()(const std::array<T, Nin>& input) {
-            return MLP<T, Nin, Nouts...>::operator()(input)[0];
-        }
-};
-```
 
 ## Gradient descent
 
