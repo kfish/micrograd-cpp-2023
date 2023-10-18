@@ -537,7 +537,11 @@ We introduce generic evaluation and learning classes for anything that can produ
 
 ### MSELoss
 
-Implementation in [include/loss.h](include/loss.h):
+We evaluate a prediction against a known "ground truth". The difference between these is the *Error*, and we
+take the square of the error to approximate distance.
+We average these out when considering an array of predictions and their ground truths. This is the Mean Squared Error.
+
+Implementation in [include/loss.h](include/loss.h).
 
 ```c++
 template <typename T>
@@ -558,7 +562,7 @@ Value<T> mse_loss(const std::array<Value<T>, N>& predictions, const std::array<T
 }
 ```
 
-Wrapper class:
+We provide a wrapper class to calculate the Mean Squared Error of any `std::function<Value<T>(const Arg&)>`:
 
 ```c++
 template<typename T, size_t N, typename Arg>
@@ -651,10 +655,14 @@ class MLP {
 };
 ```
 
-
 ## Gradient descent
 
+The gradients calculated by running `backward(loss)` annotate how each parameter contributes to the error loss.
+By adjusting each parameter down (against the gradient) we aim to minimize the error.
+
 ### CanBackProp
+
+We introduce a concept `CanBackProp` to describe any function that can be evaluated and adjusted:
 
 ```c++
 template <typename F, typename T, typename Arg>
@@ -664,10 +672,15 @@ concept CanBackProp = requires(F f, Arg arg, T learning_rate) {
 };
 ```
 
-... `CanBackProp` is true for `MLP1`.
+For example, `CanBackProp` is true for `MLP1`.
 
 ### BackProp
 
+We create a wrapper class for any function that matches the `CanBackProp` concept. This class is callable
+with input and ground truth arguments, which are used to iteratively:
+  * make predictions
+  * evaluate error loss against ground truth
+  * adjust parameters to minimize loss
 
 ```c++
 template<typename T, size_t N, typename Arg, typename F>
@@ -714,6 +727,8 @@ class BackPropImpl {
         int iter_{0};
 };
 ```
+
+The helper `BackProp` template allows us to instantiate without specifying the type of `F`, as the compiler can infer it from the constructor argument:
 
 ```c++
 template<typename T, size_t N, typename Arg, typename F>
