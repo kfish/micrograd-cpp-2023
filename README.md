@@ -491,6 +491,9 @@ private:
 
 ### MLP1
 
+If we want a single-valued output from our neural network, we create a wrapper class `MLP1<>` that returns only the first element
+of the output of the wrapped `MLP<>`:
+
 ```c++
 template <typename T, size_t Nin, size_t... Nouts>
 class MLP1 : public MLP<T, Nin, Nouts...>
@@ -510,7 +513,27 @@ class MLP1 : public MLP<T, Nin, Nouts...>
 };
 ```
 
+With the following code from [examples/mlp1.cpp](examples/mlp1.cpp) we can make a 3 layer neural net with 1 output,
+run backpropagation over it and show the resulting expression graph:
+
+```c++
+    MLP1<double, 3, 4, 4, 1> n;
+
+    std::array<double, 3> input = {{ 2.0, 3.0, -1.0 }};
+    auto output = n(input);
+
+    backward(output);
+
+    std::cout << Graph(output) << std::endl;
+```
+
+![MLP1 graph](examples/mlp1.svg)
+
 ## Loss function
+
+Now that we can make a neural net, run it forwards to produce a value and backwards to calculate gradients, we can begin adjusting it to learn.
+
+We introduce generic evaluation and learning classes for anything that can produce `Value<T>`.
 
 ### Parameters
 
