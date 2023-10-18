@@ -25,8 +25,8 @@ This roughly follows the flow of Karpathy's YouTube tutorial, with details speci
    - [MLP](#mlp)
    - [MLP1](#mlp1)
  * [Loss function](#loss-function)
-   - [Parameters](#parameters)
    - [MSELoss](#mseloss)
+   - [Parameters](#parameters)
  * [Gradient descent](#gradient-descent)
    - [CanBackProp](#canbackprop)
    - [BackProp](#backprop)
@@ -535,6 +535,56 @@ Now that we can make a neural net, run it forwards to produce a value and backwa
 
 We introduce generic evaluation and learning classes for anything that can produce `Value<T>`.
 
+### MSELoss
+
+Implementation in [include/loss.h](include/loss.h):
+
+```c++
+template <typename T>
+Value<T> mse_loss(const Value<T>& predicted, const Value<T>& ground_truth) {
+    static_assert(std::is_arithmetic<T>::value, "Type must be arithmetic");
+    return pow(predicted - ground_truth, 2);
+}
+```
+
+```c++
+template<typename T, size_t N>
+Value<T> mse_loss(const std::array<Value<T>, N>& predictions, const std::array<T, N>& ground_truth) {
+    Value<T> sum_squared_error = std::inner_product(predictions.begin(), predictions.end(), ground_truth.begin(), make_value<T>(0),
+        std::plus<>(),
+        [](Value<T> pred, T truth) { return pow(pred - truth, 2); }
+    );
+    return sum_squared_error / make_value<T>(N);
+}
+```
+
+Wrapper class:
+
+```c++
+template<typename T, size_t N, typename Arg>
+class MSELoss {
+    public:
+        MSELoss(const std::function<Value<T>(const Arg&)>& func)
+            : func_(func)
+        {
+        }
+
+        Value<T> operator()(std::array<Arg, N>& input, const std::array<T, N>& ground_truth, bool verbose=false) {
+            if (verbose) std::cerr << "Predictions: ";
+            for (size_t i = 0; i < N; ++i) {
+                predictions_[i] = func_(input[i]);
+                if (verbose) std::cerr << predictions_[i]->data() << " ";
+            }
+            if (verbose) std::cerr << '\n';
+            return mse_loss(predictions_, ground_truth);
+        }
+
+    private:
+        const std::function<Value<T>(const Arg&)> func_;
+        std::array<Value<T>, N> predictions_;
+};
+```
+
 ### Parameters
 
 ```c++
@@ -600,57 +650,6 @@ class MLP {
     ...
 };
 ```
-
-### MSELoss
-
-Implementation in [include/loss.h](include/loss.h):
-
-```c++
-template <typename T>
-Value<T> mse_loss(const Value<T>& predicted, const Value<T>& ground_truth) {
-    static_assert(std::is_arithmetic<T>::value, "Type must be arithmetic");
-    return pow(predicted - ground_truth, 2);
-}
-```
-
-```c++
-template<typename T, size_t N>
-Value<T> mse_loss(const std::array<Value<T>, N>& predictions, const std::array<T, N>& ground_truth) {
-    Value<T> sum_squared_error = std::inner_product(predictions.begin(), predictions.end(), ground_truth.begin(), make_value<T>(0),
-        std::plus<>(),
-        [](Value<T> pred, T truth) { return pow(pred - truth, 2); }
-    );
-    return sum_squared_error / make_value<T>(N);
-}
-```
-
-Wrapper class:
-
-```c++
-template<typename T, size_t N, typename Arg>
-class MSELoss {
-    public:
-        MSELoss(const std::function<Value<T>(const Arg&)>& func)
-            : func_(func)
-        {
-        }
-
-        Value<T> operator()(std::array<Arg, N>& input, const std::array<T, N>& ground_truth, bool verbose=false) {
-            if (verbose) std::cerr << "Predictions: ";
-            for (size_t i = 0; i < N; ++i) {
-                predictions_[i] = func_(input[i]);
-                if (verbose) std::cerr << predictions_[i]->data() << " ";
-            }
-            if (verbose) std::cerr << '\n';
-            return mse_loss(predictions_, ground_truth);
-        }
-
-    private:
-        const std::function<Value<T>(const Arg&)> func_;
-        std::array<Value<T>, N> predictions_;
-};
-```
-
 
 
 ## Gradient descent
