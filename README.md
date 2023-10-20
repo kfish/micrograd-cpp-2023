@@ -832,11 +832,11 @@ We also considered some more generic aspects of model evaluation and iterative l
 ## References
 
 ### Automatic differentiation in C++
-* https://www.youtube.com/watch?v=1QQj1mAV-eY
-* https://compiler-research.org/assets/presentations/CladInROOT_15_02_2020.pdf
-* https://arxiv.org/abs/2102.03681
+* [Differentiable Programming in C++ - Vassil Vassilev & William Moses - CppCon 2021](https://www.youtube.com/watch?v=1QQj1mAV-eY) [YouTube]
+* [Automatic Differentiation in C++](https://compiler-research.org/assets/presentations/CladInROOT_15_02_2020.pdf)[PDF]
+* [FastAD: Expression Template-Based C++ Library for Fast and Memory-Efficient Automatic Differentiation](https://arxiv.org/abs/2102.03681) [PDF]
 
 ### Automatic differentiation
-* https://hackage.haskell.org/package/ad
+* [ad](https://hackage.haskell.org/package/ad)
 
 
