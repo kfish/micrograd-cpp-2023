@@ -43,7 +43,10 @@ an expression like `a+b` is implemented using `operator+`, and differentiated in
 using a `std::function` attached to each graph node to calculate its gradient.
 
 This implementation allows computations using `Value` objects to be written as
-normal-looking C++ code.
+normal-looking C++ code. It also includes generic classes for evaluation and learning for anything that can produce `Value<T>`.
+
+Like micrograd, the point is still to be educational, with a focus on some implementation details
+and flexibility for exploring learning algorithms.
 
 ### Example usage
 
@@ -82,7 +85,9 @@ int main(int argc, char *argv[])
 1. Data type
 
 Neural nets generally don't require many bits of precision on individual node values,
-so let's not limit ourselves to `float` or `double`. We template using `Value<T>`.
+so let's not limit ourselves to `float` or `double`
+(or [FP8](https://github.com/opencomputeproject/FP8/blob/main/ofp8_references.pdf)).
+We template using `Value<T>`.
 
 2. Sharing
 
@@ -101,7 +106,10 @@ removed in order to implement backpropagation.
 ![c += c + 1](examples/c-plus-equals-cycle.svg)
 
 In Python, `x += y` usually translates to `x.__iadd__(y)` which modifies `x` in-place.
-However, the `Value` objects in `micrograd` don't implement `__iadd__`, so Python falls back to using `__add__` followed by assignment. That means `a += b` is roughly equivalent to `a = a + b`. Each time the + operator is invoked, a new Value object is created and the computational graph gets extended, so it is not modifying the existing objects in-place from a computational graph perspective. Rather, it's creating new nodes in the graph, extending it with more operations to backtrack during the backward() pass.
+However, the `Value` objects in `micrograd` don't implement `__iadd__`, so Python falls back to using `__add__`
+followed by assignment. That means `a += b` is roughly equivalent to `a = a + b`. Each time the + operator
+is invoked, a new Value object is created and the graph gets extended, so it is not modifying the existing
+objects in-place.
 
 In C++, `operator+=` requires an explicit implementation which modifies its value in-place.
 We create a copy of the old value and re-write all earlier references in the expression graph
@@ -815,6 +823,11 @@ $ gnuplot loss_plot.gp
 ![loss.svg](examples/loss.svg)
 
 This shows the loss reduction during training.
+
+## Conclusion
+
+We ported all the features of micrograd introduced in Karpathy's YouTube tutorial to C++, giving a different perspective on implementation details.
+We also considered some more generic aspects of model evaluation and iterative learning to develop re-usable C++ classes.
 
 ## References
 
