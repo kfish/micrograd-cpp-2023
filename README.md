@@ -31,7 +31,6 @@ This roughly follows the flow of Karpathy's YouTube tutorial, with details speci
    - [CanBackProp](#canbackprop)
    - [BackProp](#backprop)
    - [Binary Classifier](#binary-classifier)
-   - [Loss Plot](#loss-plot)
 
 with [References](#references) at the end for further reading about automatic differentiation and C++ implementations.
 
@@ -811,34 +810,57 @@ int main(int argc, char *argv[])
     std::cerr << "y (gt):\t" << PrettyArray(y) << std::endl;
 
     // Run backprop
-    double learning_rate = 0.01;
+    double learning_rate = 0.9;
 
     auto backprop = BackProp<double, 4, std::array<double, 3>>(n, "loss.tsv");
-    double loss = backprop(input, y, learning_rate, 10000, true);
+    double loss = backprop(input, y, learning_rate, 20, true);
 }
 ```
 
-### Loss Plot
+This quickly converges close to the ground truth `y = {1.0, -1.0, -1.0, 1.0}`:
 
-We can plot the loss values over iterations using [loss_plot.gp](loss_plot.gp):
-
-```gnuplot
-set logscale y
-set xlabel "Iterations"
-set ylabel "Loss"
-set terminal svg
-set output "loss.svg"
-set object 1 rect from screen 0,0 to screen 1,1 behind fillcolor rgb "white" fillstyle solid 1.0
-plot "loss.tsv" using 1:2 with lines title "Loss vs Iteration"
 ```
-
-```bash
-$ gnuplot loss_plot.gp
+Predictions: 0.773488 0.796802 0.870344 0.736159
+Loss (0):	1.7119
+Predictions: -0.316783 -0.714319 -0.588441 -0.396673
+Loss (1):	0.983902
+Predictions: 0.997675 0.996129 0.996903 0.99767
+Loss (2):	1.99304
+Predictions: 0.997454 0.995671 0.996576 0.997448
+Loss (3):	1.99226
+Predictions: 0.997183 0.995088 0.996169 0.997177
+Loss (4):	1.99127
+Predictions: 0.996845 0.99432 0.995649 0.996838
+Loss (5):	1.98999
+Predictions: 0.996409 0.993259 0.99496 0.996403
+Loss (6):	1.98824
+Predictions: 0.995827 0.991692 0.994 0.995819
+Loss (7):	1.98573
+Predictions: 0.995001 0.989122 0.992564 0.994993
+Loss (8):	1.98174
+Predictions: 0.993729 0.984072 0.990152 0.993718
+Loss (9):	1.97433
+Predictions: 0.991462 0.969564 0.985135 0.991443
+Loss (10):	1.95502
+Predictions: 0.985916 0.862539 0.967274 0.985854
+Loss (11):	1.8349
+Predictions: 0.947625 -0.182752 0.497795 0.945489
+Loss (12):	0.72925
+Predictions: -0.0306315 -0.996451 -0.996155 -0.512822
+Loss (13):	0.837715
+Predictions: 0.999406 -0.977287 -0.542644 0.999393
+Loss (14):	0.0524229
+Predictions: 0.999027 -0.997707 -0.997583 0.998998
+Loss (15):	3.26197e-06
+Predictions: 0.999027 -0.997707 -0.997584 0.998998
+Loss (16):	3.26134e-06
+Predictions: 0.999027 -0.997708 -0.997584 0.998998
+Loss (17):	3.26072e-06
+Predictions: 0.999027 -0.997708 -0.997584 0.998998
+Loss (18):	3.26009e-06
+Predictions: 0.999027 -0.997708 -0.997585 0.998998
+Loss (19):	3.25946e-06
 ```
-
-![loss.svg](examples/loss.svg)
-
-This shows the loss reduction during training.
 
 ## Conclusion
 
