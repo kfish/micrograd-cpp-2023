@@ -48,7 +48,23 @@ normal-looking C++ code. It also includes generic classes for evaluation and lea
 Like micrograd, the point is still to be educational, with a focus on some implementation details
 and flexibility for exploring learning algorithms.
 
+### Building
+
+For simplicity, there are no code dependencies. Data is manipulated using `std::array<>` and graphing and plotting is done
+with external tools like `dot` and `gnuplot`.
+
+Build with CMake, eg
+
+```bash
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+```
+
 ### Example usage
+
+This is [examples/example-usage.cpp](examples/example-usage.cpp):
 
 ```c++
 #include <iostream>
