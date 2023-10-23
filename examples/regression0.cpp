@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     // Run backprop
     double learning_rate = 0.01;
 
-    auto backprop = BackProp<double, 4, double>(n, "loss.tsv");
+    auto backprop = BackProp<double, double, 4>(n, "loss.tsv");
 
     double loss = backprop(input, y, learning_rate, 40, true);
 
