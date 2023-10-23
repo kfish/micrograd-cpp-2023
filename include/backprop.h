@@ -16,7 +16,7 @@ concept CanBackProp = requires(F f, Arg arg, T learning_rate) {
 };
 
 
-template<typename T, size_t N, typename Arg, typename F>
+template<typename T, typename Arg, size_t N, typename F>
 class BackPropImpl {
     public:
         BackPropImpl(const F& func, const std::string& loss_path)
@@ -60,11 +60,11 @@ class BackPropImpl {
         int iter_{0};
 };
 
-template<typename T, size_t N, typename Arg, typename F>
+template<typename T, typename Arg, size_t N, typename F>
 requires CanBackProp<F, T, Arg>
 auto BackProp(const F& func, const std::string& loss_path)
 {
-    return BackPropImpl<T, N, Arg, F>(func, loss_path);
+    return BackPropImpl<T, Arg, N, F>(func, loss_path);
 }
 
 } // namespace ai

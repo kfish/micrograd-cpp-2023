@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     double learning_rate = 0.9;
 
-    auto backprop = BackProp<double, 4, std::array<double, 3>>(n, "loss.tsv");
+    auto backprop = BackProp<double, std::array<double, 3>, 4>(n, "loss.tsv");
 
     // Run backprop for 20 iterations, verbose=true
     double loss = backprop(input, y, learning_rate, 20, true);
