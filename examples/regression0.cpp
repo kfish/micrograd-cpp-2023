@@ -9,27 +9,27 @@ using namespace ai;
 class Regression0 {
     public:
         Regression0()
-            : weight_(randomValue<double>())
+            : weight_(randomValue<float>())
         {}
 
-        Value<double> weight() const {
+        Value<float> weight() const {
             return weight_;
         }
 
-        Value<double> operator()(const Value<double>& x) const {
+        Value<float> operator()(const Value<float>& x) const {
             return weight_ * x;
         }
 
-        Value<double> operator()(const double& x) const {
+        Value<float> operator()(const float& x) const {
             return this->operator()(make_value(x));
         }
 
-        void adjust(const double& learning_rate) {
+        void adjust(const float& learning_rate) {
             weight_->adjust(learning_rate);
         }
 
     private:
-        Value<double> weight_;
+        Value<float> weight_;
 };
 
 static inline std::ostream& operator<<(std::ostream& os, const Regression0& r)
@@ -43,19 +43,19 @@ int main(int argc, char *argv[])
 
     std::cerr << n << std::endl;
 
-    std::array<double, 4> input = {
+    std::array<float, 4> input = {
         {-7.0, -3.0, 1.0, 4.0},
     };
 
-    std::array<double, 4> y = {-21.0, -9.0, 3.0, 12.0};
+    std::array<float, 4> y = {-21.0, -9.0, 3.0, 12.0};
     std::cerr << "y (gt):\t" << PrettyArray(y) << std::endl;
 
     // Run backprop
-    double learning_rate = 0.01;
+    float learning_rate = 0.01;
 
-    auto backprop = BackProp<double, double, 4>(n, "loss.tsv");
+    auto backprop = BackProp<float, float, 4>(n, "loss.tsv");
 
-    double loss = backprop(input, y, learning_rate, 40, true);
+    float loss = backprop(input, y, learning_rate, 40, true);
 
     std::cout << Graph(backprop.loss_function()(input, y)) << std::endl;
 }

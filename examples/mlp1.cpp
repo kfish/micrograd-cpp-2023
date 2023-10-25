@@ -8,9 +8,9 @@ using namespace ai;
 int main(int argc, char *argv[])
 {
     // Define a neural net
-    MLP1<double, 3, 4, 4, 1> n;
+    MLP1<float, 3, 4, 4, 1> n;
 
-    std::array<double, 3> input = {{ 2.0, 3.0, -1.0 }};
+    std::array<float, 3> input = {{ 2.0, 3.0, -1.0 }};
     auto output = n(input);
 
     backward(output);
