@@ -3,7 +3,6 @@
 #include <cmath>
 
 #include "array.h"
-#include "funcy.h"
 #include "tuple.h"
 #include "mac.h"
 #include "randomdata.h"
@@ -65,7 +64,10 @@ class Layer {
         }
 
         std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& x) {
-            return map_array<Neuron<T, Nin>, std::array<Value<T>, Nin>, Value<T>, Nout>(neurons_, x);
+            std::array<Value<T>, Nout> output{};
+            std::transform(std::execution::par_unseq, neurons_.begin(), neurons_.end(),
+                    output.begin(), [&](const auto& n) { return n(x); });
+            return output;
         }
 
         const std::array<Neuron<T, Nin>, Nout> neurons() const {
