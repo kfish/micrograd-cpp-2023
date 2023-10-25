@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <array>
 
 template<typename T, std::size_t N>

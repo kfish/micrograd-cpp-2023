@@ -3,7 +3,6 @@
 #include <cmath>
 
 #include "array.h"
-#include "funcy.h"
 #include "tuple.h"
 #include "mac.h"
 #include "randomdata.h"
@@ -60,28 +59,15 @@ static inline std::ostream& operator<<(std::ostream& os, const Neuron<T, Nin>& n
 template <typename T, size_t Nin, size_t Nout>
 class Layer {
     public:
-        Layer()
-        {
-        }
-
         std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& x) {
-            return map_array<Neuron<T, Nin>, std::array<Value<T>, Nin>, Value<T>, Nout>(neurons_, x);
+            std::array<Value<T>, Nout> output{};
+            std::transform(std::execution::par_unseq, neurons_.begin(), neurons_.end(),
+                    output.begin(), [&](const auto& n) { return n(x); });
+            return output;
         }
 
         const std::array<Neuron<T, Nin>, Nout> neurons() const {
             return neurons_;
-        }
-
-        void adjust_weights(const T& learning_rate) {
-            for (auto & n : neurons_) {
-                n.adjust_weights(learning_rate);
-            }
-        }
-
-        void adjust_bias(const T& learning_rate) {
-            for (auto & n : neurons_) {
-                n.adjust_bias(learning_rate);
-            }
         }
 
         void adjust(const T& learning_rate) {
@@ -124,22 +110,6 @@ template <typename T, size_t Nin, size_t... Nouts>
 static constexpr size_t LayersNout = BuildLayers<T, Nin, Nouts...>::nout;
 
 template<typename T, typename... Ls>
-void layers_adjust_weights(std::tuple<Ls...>& layers, const T& learning_rate) {
-    std::apply([&learning_rate](auto&... layer) {
-        // Use fold expression to call adjust_weights on each layer
-        (..., layer.adjust_weights(learning_rate));
-    }, layers);
-}
-
-template<typename T, typename... Ls>
-void layers_adjust_bias(std::tuple<Ls...>& layers, const T& learning_rate) {
-    std::apply([&learning_rate](auto&... layer) {
-        // Use fold expression to call adjust_bias on each layer
-        (..., layer.adjust_bias(learning_rate));
-    }, layers);
-}
-
-template<typename T, typename... Ls>
 void layers_adjust(std::tuple<Ls...>& layers, const T& learning_rate) {
     std::apply([&learning_rate](auto&... layer) {
         // Use fold expression to call adjust on each layer
@@ -163,12 +133,6 @@ public:
 
     std::array<Value<T>, Nout> operator()(const std::array<T, Nin>& input) {
         return this->operator()(value_array(input));
-    }
-
-    void adjust_weights(const T& learning_rate) {
-    }
-
-    void adjust_bias(const T& learning_rate) {
     }
 
     void adjust(const T& learning_rate) {
