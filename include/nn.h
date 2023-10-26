@@ -59,7 +59,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Neuron<T, Nin>& n
 template <typename T, size_t Nin, size_t Nout>
 class Layer {
     public:
-        std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& x) {
+        std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& x) const {
             std::array<Value<T>, Nout> output{};
             std::transform(std::execution::par_unseq, neurons_.begin(), neurons_.end(),
                     output.begin(), [&](const auto& n) { return n(x); });
@@ -127,11 +127,11 @@ public:
         return layers_;
     };
 
-    std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& input) {
+    std::array<Value<T>, Nout> operator()(const std::array<Value<T>, Nin>& input) const {
         return forward<0, Nin, Nouts...>(input);
     }
 
-    std::array<Value<T>, Nout> operator()(const std::array<T, Nin>& input) {
+    std::array<Value<T>, Nout> operator()(const std::array<T, Nin>& input) const {
         return this->operator()(value_array(input));
     }
 
@@ -141,7 +141,7 @@ public:
 
 private:
     template <size_t I, size_t NinCurr, size_t NoutCurr, size_t... NoutsRest>
-    auto forward(const std::array<Value<T>, NinCurr>& input) -> decltype(auto) {
+    auto forward(const std::array<Value<T>, NinCurr>& input) const -> decltype(auto) {
         auto & p = std::get<I>(layers_);
         auto output = std::get<I>(layers_)(input);
         if constexpr (sizeof...(NoutsRest) > 0) {
