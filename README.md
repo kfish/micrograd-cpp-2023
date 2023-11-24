@@ -8,6 +8,8 @@ Each step of the first episode of *Neural Nets: Zero to Hero*:
 [The spelled-out intro to neural networks and backpropagation: building micrograd](https://youtu.be/VMj-3S1tku0)
 is included.
 
+![](https://i.ytimg.com/vi/VMj-3S1tku0/hqdefault.jpg)
+
 This roughly follows the flow of Karpathy's YouTube tutorial, with details specific to this C++ implementation:
 
  * [What is micrograd-cpp and why is it interesting?](#what-is-micrograd-cpp-and-why-is-it-interesting)
@@ -35,6 +37,9 @@ This roughly follows the flow of Karpathy's YouTube tutorial, with details speci
    - [Binary Classifier](#binary-classifier)
 
 with [References](#references) at the end for further reading about automatic differentiation and C++ implementations.
+
+See [kfish/makemore-cpp-2023](https://github.com/kfish/makemore-cpp-2023) for a continuation to other
+videos in the series, expanding the codebase to handle automatic differentiation of vectors and matrices.
 
 ## What is micrograd-cpp and why is it interesting?
 
@@ -885,4 +890,5 @@ We also considered some more generic aspects of model evaluation and iterative l
 ### Automatic differentiation
 * [ad](https://hackage.haskell.org/package/ad)
 
+## Next up: [kfish/makemore-cpp-2023](https://github.com/kfish/makemore-cpp-2023)
 
